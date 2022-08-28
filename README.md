@@ -1,2 +1,4 @@
-A sample command-line application with an entrypoint in `bin/`, library code
-in `lib/`, and example unit test in `test/`.
+# 纯dart实现的Nes模拟器
+
+项目部分代码来自
+https://github.com/tilemoon/nesbox/
