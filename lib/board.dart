@@ -1,11 +1,10 @@
-import 'package:nes/ram/adapter.dart';
-
 import 'apu/adapter.dart';
 import 'bus.dart';
 import 'cpu/cpu.dart';
 import 'joypad/adapter.dart';
 import 'ppu/adapter.dart';
 import 'ppu/ppu.dart';
+import 'ram/adapter.dart';
 import 'ram/ram.dart';
 import 'rom/cartridge.dart';
 import 'rom/rom.dart';

@@ -1,11 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:nes/device.dart';
-import 'package:nes/rom/palette.dart';
-import 'package:nes/util.dart';
-
 import '../common.dart';
+import '../device.dart';
 import '../framebuffer.dart';
+import '../rom/palette.dart';
+import '../util.dart';
 import 'mapper.dart';
 
 const int PRG_BANK_SIZE = 0x4000;

@@ -2,9 +2,8 @@ library nesbox.ppu;
 
 import 'dart:typed_data';
 
-import 'package:nes/device.dart';
-
 import '../common.dart';
+import '../device.dart';
 import '../framebuffer.dart';
 import '../rom/palette.dart';
 import '../util.dart';

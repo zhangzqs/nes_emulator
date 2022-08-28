@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:nes/nes.dart';
+import 'package:nes_emulator/nes.dart';
 
 import '../nesbox_controller.dart';
 import 'frame_canvas.dart';

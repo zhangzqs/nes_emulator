@@ -102,7 +102,7 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.7.0"
-  nes:
+  nes_emulator:
     dependency: "direct main"
     description:
       path: "../.."

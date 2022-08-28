@@ -1,6 +1,5 @@
-import 'package:nes/util.dart';
-
 import '../device.dart';
+import '../util.dart';
 
 part 'address_mode.dart';
 part 'instruction.dart';

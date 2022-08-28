@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:nes/framebuffer.dart';
-import 'package:nes/nes.dart';
-import 'package:nes/rom/cartridge.dart';
+import 'package:nes_emulator/framebuffer.dart';
+import 'package:nes_emulator/nes.dart';
+import 'package:nes_emulator/rom/cartridge.dart';
 
 class NesBoxController {
   NesBoxController();

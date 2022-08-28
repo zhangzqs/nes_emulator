@@ -1,4 +1,4 @@
-name: nes_emulator
+name: nes_emulator_gui
 description: A new Flutter project.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_hooks: ^0.18.4
-  nes:
+  nes_emulator:
     path: ../../
 
 
