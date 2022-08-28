@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:nes/board.dart';
 import 'package:nes/rom/cartridge.dart';
 
@@ -7,10 +5,10 @@ import 'framebuffer.dart';
 
 class Nes {
   Board board;
-  Uint8List gameBytes;
   double fps = 0;
 
-  Nes(this.gameBytes) : board = Board(Cartridge(gameBytes));
+  final Cartridge cartridge;
+  Nes(this.cartridge) : board = Board(cartridge);
 
   void clock() {
     int times = board.cpu.clock() * 3;
