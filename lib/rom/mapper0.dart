@@ -3,7 +3,7 @@ import 'cartridge.dart';
 import 'mapper.dart';
 
 class Mapper0 extends Mapper {
-  Mapper0(Cardtridge card) : super(card);
+  Mapper0(Cartridge card) : super(card);
 
   @override
   read(int address) {

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:nes/device.dart';
 import 'package:nes/rom/palette.dart';
 import 'package:nes/util.dart';
 
@@ -11,7 +12,7 @@ const int PRG_BANK_SIZE = 0x4000;
 const int CHR_BANK_SIZE = 0x2000;
 const int TRAINER_SIZE = 0x0200;
 
-class Cardtridge {
+class Cartridge implements AddressableDevice {
   late Uint8List rom; // whole game rom
 
   late Uint8List prgROM;
@@ -29,17 +30,21 @@ class Cardtridge {
   TileFrame firstTileFrame = TileFrame();
   TileFrame secondTileFrame = TileFrame();
 
-  loadNesFile(Uint8List gameBytes) {
+  Cartridge(Uint8List gameBytes) {
     rom = gameBytes;
 
     parse();
     createTileFrame(firstTileFrame);
     createTileFrame(secondTileFrame, 0x1000);
   }
+  @override
+  U8 read(U16 address) => mapper.read(address);
 
-  int read(int address) => mapper.read(address);
+  @override
+  void write(U16 address, U8 value) => mapper.write(address, value);
 
-  void write(int address, int value) => mapper.write(address, value);
+  @override
+  bool accept(U16 address) => true;
 
   parse() {
     // header[0-3]: Constant $4E $45 $53 $1A ("NES" followed by MS-DOS end-of-file)
@@ -49,10 +54,10 @@ class Cardtridge {
 
     // mirroring type
     mirroring = {
-      0: Mirroring.Horizontal,
-      1: Mirroring.Vertical,
-      2: Mirroring.FourScreen,
-      3: Mirroring.FourScreen,
+      0: Mirroring.horizontal,
+      1: Mirroring.vertical,
+      2: Mirroring.fourScreen,
+      3: Mirroring.fourScreen,
     }[rom[6].getBit(3) << 1 | rom[6].getBit(0)]!;
 
     // battery-backed RAM Save-RAM

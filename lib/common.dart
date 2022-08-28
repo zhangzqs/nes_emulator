@@ -1,6 +1,8 @@
+typedef VoidCallback = void Function();
+
 enum Mirroring {
-  Horizontal,
-  Vertical,
-  SingleScreen,
-  FourScreen,
+  horizontal,
+  vertical,
+  singleScreen,
+  fourScreen,
 }
