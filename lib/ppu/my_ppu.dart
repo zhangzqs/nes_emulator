@@ -26,13 +26,13 @@ class MyPPU {
     required this.mirroring,
     required this.onNmiInterrupted,
     required this.onCycleChanged,
-  });
+  }) : ppuVideoRAM = mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
+
+  final Uint8List ppuVideoRAM;
+  final Uint8List ppuPalettes = Uint8List(0x20);
 
   // In most case PPU only use 2kb RAM and mirroring the name tables
   // but when four-screen mirroring it will use an additional 2kb RAM.
-  Uint8List ppuVideoRAM = Uint8List(0);
-
-  Uint8List ppuPalettes = Uint8List(0);
 
   // https://wiki.nesdev.com/w/index.php/PPUregisters
 
