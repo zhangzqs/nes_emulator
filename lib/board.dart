@@ -47,6 +47,7 @@ class Board {
 
   /// 主板上的reset按键
   void reset() {
+    ram.reset();
     cpu.reset();
     ppu.reset();
   }

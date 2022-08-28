@@ -435,6 +435,13 @@ class Ppu {
     regMask = 0x00;
     regScroll = 0x00;
     dataBuffer = 0x00;
+
+    for (int i = 0; i < ppuVideoRAM.length; i++) {
+      ppuVideoRAM[i] = 0;
+    }
+    for (int i = 0; i < ppuPalettes.length; i++) {
+      ppuPalettes[i] = 0;
+    }
   }
 
   int readRegister(int address) {
