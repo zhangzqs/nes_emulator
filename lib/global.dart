@@ -3,9 +3,9 @@ import 'package:nes/cpu/cpu.dart';
 import 'package:nes/joypad.dart';
 import 'package:nes/ppu.dart';
 import 'package:nes/ram.dart';
-import 'package:nes/rom.dart';
 
 import 'bus.dart';
+import 'rom/rom.dart';
 
 class Global {
   final bus = Bus();

@@ -1,4 +1,4 @@
-import 'device.dart';
+import '../device.dart';
 
 class Rom implements AddressableDevice {
   @override
