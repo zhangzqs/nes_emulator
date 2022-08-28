@@ -4,8 +4,8 @@ import 'dart:typed_data';
  * one Frame is and int8 array, every pixel takes 4 element as R G B A.
 */
 
-class Frame {
-  Frame({
+class FrameBuffer {
+  FrameBuffer({
     this.width = 256,
     this.height = 240,
   }) {
@@ -28,6 +28,6 @@ class Frame {
 }
 
 // tile frame is a 16 x 16 tile frame.
-class TileFrame extends Frame {
+class TileFrame extends FrameBuffer {
   TileFrame() : super(height: 128, width: 128);
 }

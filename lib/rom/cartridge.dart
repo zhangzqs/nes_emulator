@@ -12,7 +12,7 @@ const int PRG_BANK_SIZE = 0x4000;
 const int CHR_BANK_SIZE = 0x2000;
 const int TRAINER_SIZE = 0x0200;
 
-class Cartridge implements AddressableDevice {
+class Cartridge implements BusAdapter {
   late Uint8List rom; // whole game rom
 
   late Uint8List prgROM;

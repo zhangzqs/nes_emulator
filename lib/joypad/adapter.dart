@@ -1,6 +1,6 @@
-import 'device.dart';
+import '../device.dart';
 
-class JoyPad implements AddressableDevice {
+class JoyPadAdapter implements BusAdapter {
   @override
   bool accept(U16 address) => (0x4016 <= address && address < 0x4018);
 

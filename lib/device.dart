@@ -2,7 +2,7 @@ typedef U8 = int;
 typedef U16 = int;
 
 /// 主线的从设备必须实现此接口
-abstract class AddressableDevice {
+abstract class BusAdapter {
   /// 读取数据
   U8 read(U16 address);
 

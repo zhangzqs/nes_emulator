@@ -14,7 +14,7 @@ enum CpuInterrupt {
 
 // emualtor for 6502 CPU
 class CPU {
-  final AddressableDevice bus;
+  final BusAdapter bus;
 
   CPU(this.bus);
 

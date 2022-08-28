@@ -1,13 +1,13 @@
 import 'device.dart';
 
 /// 可以把总线本身也看作可寻址的设备
-class Bus implements AddressableDevice {
-  final List<AddressableDevice> devices = [];
+class Bus implements BusAdapter {
+  final List<BusAdapter> devices = [];
 
   /// 注册所有的从设备
-  void registerDevice(AddressableDevice device) => devices.add(device);
+  void registerDevice(BusAdapter device) => devices.add(device);
 
-  AddressableDevice? _findDeviceByAddress(U16 address) {
+  BusAdapter? _findDeviceByAddress(U16 address) {
     for (final device in devices) {
       if (device.accept(address)) return device;
     }

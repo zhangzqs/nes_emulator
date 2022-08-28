@@ -1,9 +1,9 @@
 import '../device.dart';
 import 'cartridge.dart';
 
-class Rom implements AddressableDevice {
+class RomAdapter implements BusAdapter {
   final Cartridge cartridge;
-  Rom(this.cartridge);
+  RomAdapter(this.cartridge);
 
   @override
   bool accept(U16 address) => (0x8000 <= address && address <= 0xFFFF);
