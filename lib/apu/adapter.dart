@@ -1,16 +1,12 @@
-import '../device.dart';
+import '../bus_adapter.dart';
 
 class ApuBusAdapter implements BusAdapter {
   @override
-  bool accept(U16 address) => (0x4004 <= address && address <= 0x4007) || address == 0x4015;
+  bool accept(U16 address) => (0x4000 <= address && address < 0x4020);
 
   @override
-  U8 read(U16 address) {
-    throw UnimplementedError();
-  }
+  U8 read(U16 address) => 0;
 
   @override
-  void write(U16 address, U8 value) {
-    throw UnimplementedError();
-  }
+  void write(U16 address, U8 value) {}
 }

@@ -2,8 +2,10 @@ library nesbox.ppu;
 
 import 'dart:typed_data';
 
+import 'package:nes_emulator/rom/cartridge.dart';
+
+import '../bus_adapter.dart';
 import '../common.dart';
-import '../device.dart';
 import '../framebuffer.dart';
 import '../rom/palette.dart';
 import '../util.dart';
@@ -15,23 +17,17 @@ class Ppu {
 
   BusAdapter bus;
 
-  BusAdapter card;
-
-  Mirroring mirroring;
-
-  Ppu({
-    required this.bus,
-    required this.card,
-    required this.mirroring,
-    required this.onNmiInterrupted,
-    required this.onCycleChanged,
-  }) : ppuVideoRAM = mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
+  Cartridge cartridge;
 
   final Uint8List ppuVideoRAM;
   final Uint8List ppuPalettes = Uint8List(0x20);
 
-  // In most case PPU only use 2kb RAM and mirroring the name tables
-  // but when four-screen mirroring it will use an additional 2kb RAM.
+  Ppu({
+    required this.bus,
+    required this.cartridge,
+    required this.onNmiInterrupted,
+    required this.onCycleChanged,
+  }) : ppuVideoRAM = cartridge.mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
 
   // https://wiki.nesdev.com/w/index.php/PPUregisters
 
@@ -44,7 +40,7 @@ class Ppu {
   int fSelect = 0; // 0: read backdrop from EXT pins; 1: output color on EXT pins
   int fNmiOutput = 0; // 1bit, 0: 0ff, 1: on
 
-  set regController(int value) {
+  void set regController(int value) {
     fBaseNameTable = value & 0x3;
     fAddressIncrement = value >> 2 & 0x1;
     fSpritePatternTable = value >> 3 & 0x1;
@@ -188,13 +184,13 @@ class Ppu {
     return value;
   }
 
-  set regData(int value) {
+  void set regData(int value) {
     write(regV, value);
     regV += fAddressIncrement == 1 ? 32 : 1;
   }
 
   // OAM DMA ($4014) > write
-  set regDMA(int value) {
+  void set regDMA(int value) {
     int page = value << 8;
 
     for (int address = page; address < page + 0xff; address++) {
@@ -490,11 +486,44 @@ class Ppu {
     throw "Unhandled register writing: ${address.toHex()}";
   }
 
+  int read(int address) {
+    address = (address & 0xffff) % 0x4000;
+
+    // CHR-ROM or Pattern Tables
+    if (address < 0x2000) return cartridge.read(address);
+
+    // NameTables (RAM)
+    if (address < 0x3f00) return ppuVideoRAM[nameTableMirroring(address)];
+
+    // Palettes
+    return ppuPalettes[address % 0x20];
+  }
+
+  void write(int address, int value) {
+    address = (address & 0xffff) % 0x4000;
+    value &= 0xff;
+
+    // CHR-ROM or Pattern Tables
+    if (address < 0x2000) {
+      cartridge.write(address, value);
+      return;
+    }
+
+    // NameTables (RAM)
+    if (address < 0x3f00) {
+      ppuVideoRAM[nameTableMirroring(address)] = value;
+      return;
+    }
+
+    // Palettes
+    ppuPalettes[address % 0x20] = value;
+  }
+
   int nameTableMirroring(int address) {
     address = address % 0x1000;
     int chunk = (address / 0x400).floor();
 
-    switch (mirroring) {
+    switch (cartridge.mirroring) {
       // [A][A] --> [0x2000][0x2400]
       // [B][B] --> [0x2800][0x2c00]
       case Mirroring.horizontal:
@@ -517,38 +546,5 @@ class Ppu {
     }
 
     return address;
-  }
-
-  U8 read(U16 address) {
-    address = (address & 0xffff) % 0x4000;
-
-    // CHR-ROM or Pattern Tables
-    if (address < 0x2000) return card.read(address);
-
-    // NameTables (RAM)
-    if (address < 0x3f00) return ppuVideoRAM[nameTableMirroring(address)];
-
-    // Palettes
-    return ppuPalettes[address % 0x20];
-  }
-
-  void write(U16 address, U8 value) {
-    address = (address & 0xffff) % 0x4000;
-    value &= 0xff;
-
-    // CHR-ROM or Pattern Tables
-    if (address < 0x2000) {
-      card.write(address, value);
-      return;
-    }
-
-    // NameTables (RAM)
-    if (address < 0x3f00) {
-      ppuVideoRAM[nameTableMirroring(address)] = value;
-      return;
-    }
-
-    // Palettes
-    ppuPalettes[address % 0x20] = value;
   }
 }

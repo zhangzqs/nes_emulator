@@ -1,4 +1,4 @@
-import '../device.dart';
+import '../bus_adapter.dart';
 import '../util.dart';
 
 part 'address_mode.dart';

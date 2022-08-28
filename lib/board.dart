@@ -1,13 +1,11 @@
-import 'apu/adapter.dart';
 import 'bus.dart';
 import 'cpu/cpu.dart';
-import 'joypad/adapter.dart';
 import 'ppu/adapter.dart';
 import 'ppu/ppu.dart';
 import 'ram/adapter.dart';
 import 'ram/ram.dart';
+import 'rom/adapter.dart';
 import 'rom/cartridge.dart';
-import 'rom/rom.dart';
 
 /// 模拟NES主板
 class Board {
@@ -25,8 +23,7 @@ class Board {
 
     ppu = Ppu(
       bus: bus,
-      card: cartridge,
-      mirroring: cartridge.mirroring,
+      cartridge: cartridge,
       onNmiInterrupted: () {
         cpu.interrupt = CpuInterrupt.nmi;
       },
@@ -38,10 +35,19 @@ class Board {
     // 注册总线上的所有从设备
     [
       PpuAdapter(ppu),
-      ApuBusAdapter(),
+      // ApuBusAdapter(),
       RamAdapter(ram),
       RomAdapter(cartridge),
-      JoyPadAdapter(),
+      SRamAdapter(cartridge),
+      // JoyPadAdapter(),
     ].forEach(bus.registerDevice);
+
+    reset();
+  }
+
+  /// 主板上的reset按键
+  void reset() {
+    cpu.reset();
+    ppu.reset();
   }
 }

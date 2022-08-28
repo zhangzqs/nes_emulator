@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import '../common.dart';
-import '../device.dart';
 import '../framebuffer.dart';
 import '../rom/palette.dart';
 import '../util.dart';
@@ -11,7 +10,7 @@ const int PRG_BANK_SIZE = 0x4000;
 const int CHR_BANK_SIZE = 0x2000;
 const int TRAINER_SIZE = 0x0200;
 
-class Cartridge implements BusAdapter {
+class Cartridge {
   late Uint8List rom; // whole game rom
 
   late Uint8List prgROM;
@@ -36,28 +35,28 @@ class Cartridge implements BusAdapter {
     createTileFrame(firstTileFrame);
     createTileFrame(secondTileFrame, 0x1000);
   }
-  @override
-  U8 read(U16 address) => mapper.read(address);
 
-  @override
-  void write(U16 address, U8 value) => mapper.write(address, value);
+  int read(int address) => mapper.read(address);
 
-  @override
-  bool accept(U16 address) => true;
+  void write(int address, int value) => mapper.write(address, value);
 
   parse() {
+    if (this.rom == null) {
+      throw "no game rom round in cardtridge";
+    }
+
     // header[0-3]: Constant $4E $45 $53 $1A ("NES" followed by MS-DOS end-of-file)
-    if (rom.sublist(0, 4).join() != [0x4e, 0x45, 0x53, 0x1a].join()) {
+    if (this.rom.sublist(0, 4).join() != [0x4e, 0x45, 0x53, 0x1a].join()) {
       throw ("invalid nes file");
     }
 
     // mirroring type
-    mirroring = {
+    this.mirroring = {
       0: Mirroring.horizontal,
       1: Mirroring.vertical,
       2: Mirroring.fourScreen,
       3: Mirroring.fourScreen,
-    }[rom[6].getBit(3) << 1 | rom[6].getBit(0)]!;
+    }[this.rom[6].getBit(3) << 1 | this.rom[6].getBit(0)]!;
 
     // battery-backed RAM Save-RAM
     this.battery = this.rom[6].getBit(1) == 1;
