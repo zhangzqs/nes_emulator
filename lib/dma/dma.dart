@@ -8,7 +8,7 @@ class DmaController {
 
   // 开始传送
   void transfer(U16 sourceAddress, U16 size, U16 targetAddress) {
-    for (int i = sourceAddress; i < sourceAddress + size; i++) {
+    for (int i = 0; i < size; i++) {
       final val = sourceBus.read(sourceAddress + i);
       targetBus.write(targetAddress + i, val);
     }

@@ -37,6 +37,7 @@ class FunctionalBusAdapter implements BusAdapter {
   void write(U16 address, U8 value) {
     if (onWritten != null) {
       onWritten!(address, value);
+      return;
     }
     throw UnsupportedError('cannot write address: $address value: $value');
   }

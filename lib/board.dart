@@ -37,7 +37,9 @@ class Board {
     final dma = DmaController(
       sourceBus: bus,
       targetBus: FunctionalBusAdapter(
-        onWritten: (U16 address, U8 value) => ppu.oam[address] = value,
+        onWritten: (U16 address, U8 value) {
+          ppu.oam[address] = value;
+        },
       ),
     );
 
