@@ -13,9 +13,9 @@ extension BoolExtension on bool {
 }
 
 /// 通过枚举实现标志位对象
-class FlagBit<T extends Enum> {
+class FlagBits<T extends Enum> {
   int value;
-  FlagBit(this.value);
+  FlagBits(this.value);
   bool operator [](T flag) => value.getBit(flag.index);
   void operator []=(T flag, bool bit) => value = value.setBit(flag.index, bit);
   void set(T flag) => this[flag] = true;

@@ -3,6 +3,9 @@ library nesbox.ppu;
 import 'dart:typed_data';
 
 import 'package:nes_emulator/constant.dart';
+import 'package:nes_emulator/ppu/controller.dart';
+import 'package:nes_emulator/ppu/mask.dart';
+import 'package:nes_emulator/ppu/status.dart';
 
 import '../bus_adapter.dart';
 import '../common.dart';
@@ -11,78 +14,54 @@ import '../rom/cartridge.dart';
 import '../util.dart';
 
 class Ppu {
-  VoidCallback onNmiInterrupted;
+  /// nmi中断信号
+  final VoidCallback onNmiInterrupted;
 
-  void Function(int increased) onCycleChanged;
+  /// 向cpu发送时钟同步信号，cpu时钟数应该增加increased
+  final void Function(int increased) onCycleChanged;
 
-  BusAdapter bus;
+  /// 用于DMA内存访问
+  final BusAdapter bus;
 
-  Cartridge cartridge;
+  /// 游戏卡带
+  final Cartridge cartridge;
 
-  final Uint8List ppuVideoRAM;
-  final Uint8List ppuPalettes = Uint8List(0x20);
+  /// PPU显存
+  final Uint8List videoRAM;
+  final Uint8List palettes = Uint8List(0x20);
 
   Ppu({
     required this.bus,
     required this.cartridge,
     required this.onNmiInterrupted,
     required this.onCycleChanged,
-  }) : ppuVideoRAM = cartridge.mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
+  }) : videoRAM = cartridge.mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
 
   // https://wiki.nesdev.com/w/index.php/PPUregisters
 
-  // Controller ($2000) > write
-  int fBaseNameTable = 0; // 0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00
-  int fAddressIncrement = 0; // 0: add 1, going across; 1: add 32, going down
-  int fSpritePatternTable = 0; // 0: $0000; 1: $1000; ignored in 8x16 mode
-  int fBackPatternTable = 0; // 0: $0000; 1: $1000
-  int fSpriteSize = 0; // 0: 8x8 pixels; 1: 8x16 pixels
-  int fSelect = 0; // 0: read backdrop from EXT pins; 1: output color on EXT pins
-  int fNmiOutput = 0; // 1bit, 0: 0ff, 1: on
+  // Control ($2000) > write
+  final regControl = ControlRegister();
 
-  void set regController(int value) {
-    fBaseNameTable = value & 0x3;
-    fAddressIncrement = value >> 2 & 0x1;
-    fSpritePatternTable = value >> 3 & 0x1;
-    fBackPatternTable = value >> 4 & 0x1;
-    fSpriteSize = value >> 5 & 0x1;
-    fSelect = value >> 6 & 0x1;
-    fNmiOutput = value >> 7 & 0x1;
+  // Mask ($2001) > write
+  final regMask = MaskRegister();
+
+  final regStatus1 = StatusRegister();
+
+  set regController(int value) {
+    regControl.bits.value = value;
 
     // t: ...GH.. ........ <- d: ......GH
     // <used elsewhere> <- d: ABCDEF..
     regT = (regT & 0xf3ff) | (value & 0x03) << 10;
   }
 
-  // Mask ($2001) > write
-  int fGeryScale = 0; // 0: normal color, 1: produce a greyscale display
-  int fBackLeftMost = 0; // 1: Show background in leftmost 8 pixels of screen, 0: Hide
-  int fSpriteLeftMost = 0; // 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-  int fShowBack = 0; // 1: Show background
-  int fShowSprite = 0; // 1: Show sprites
-  int fEmphasizeRed = 0; // green on PAL/Dendy
-  int fEmphasizeGreen = 0; // red on PAL/Dendy
-  int fEmphasizeBlue = 0;
-
-  void set regMask(int value) {
-    fGeryScale = value & 0x1;
-    fBackLeftMost = value >> 1 & 0x1;
-    fSpriteLeftMost = value >> 2 & 0x1;
-    fShowBack = value >> 3 & 0x1;
-    fShowSprite = value >> 4 & 0x1;
-    fEmphasizeRed = value >> 5 & 0x1;
-    fEmphasizeGreen = value >> 6 & 0x1;
-    fEmphasizeBlue = value >> 7 & 0x1;
-  }
-
   // Status ($2002) < read
   int fSign = 0;
-  int fSpriteOverflow = 0;
-  int fSpirteZeroHit = 0;
-  int fVerticalBlanking = 0;
 
   int get regStatus {
-    int status = (fSign & 0x1f) | fSpriteOverflow << 5 | fSpirteZeroHit << 6;
+    U8 status = (fSign & 0x1f) |
+        regStatus1.bits[StatusFlag.spriteOverflow].asInt() << 5 |
+        regStatus1.bits[StatusFlag.spriteZeroHit].asInt() << 6;
 
     status |= fNmiOccurred << 7;
     fNmiOccurred = 0;
@@ -102,7 +81,7 @@ class Ppu {
 
   // OAM(SPR-RAM) data ($2004) <> read/write
   int get regOamData => oam[regOamAddress];
-  void set regOamData(int value) => oam[regOamAddress++] = value;
+  set regOamData(int value) => oam[regOamAddress++] = value;
 
   // https://wiki.nesdev.org/w/index.php?title=PPU_scrolling
   // reg V bits map
@@ -117,7 +96,7 @@ class Ppu {
   int regW = 0; // First or second write toggle, 1bit
 
   // Scroll ($2005) >> write x2
-  void set regScroll(int value) {
+  set regScroll(int value) {
     if (regW == 0) {
       // first write
       // t: ....... ...ABCDE <- d: ABCDE...
@@ -138,7 +117,7 @@ class Ppu {
   }
 
   // Address ($2006) >> write x2
-  void set regAddress(int value) {
+  set regAddress(int value) {
     if (regW == 0) {
       // first write
       // t: .CDEFGH ........ <- d: ..CDEFGH
@@ -180,17 +159,17 @@ class Ppu {
       dataBuffer = read(regV - 0x1000);
     }
 
-    regV += fAddressIncrement == 1 ? 32 : 1;
+    regV += regControl.videoRamAddressIncrement;
     return value;
   }
 
-  void set regData(int value) {
+  set regData(int value) {
     write(regV, value);
-    regV += fAddressIncrement == 1 ? 32 : 1;
+    regV += regControl.videoRamAddressIncrement;
   }
 
   // OAM DMA ($4014) > write
-  void set regDMA(int value) {
+  set regDMA(int value) {
     int page = value << 8;
 
     for (int address = page; address < page + 0xff; address++) {
@@ -202,7 +181,7 @@ class Ppu {
   int fNmiOccurred = 0; // 1bit
 
   checkNmiPulled() {
-    if (fNmiOccurred == 1 && fNmiOutput == 1) {
+    if (fNmiOccurred == 1 && regControl.generateVBlankNmi) {
       onNmiInterrupted();
     }
   }
@@ -235,7 +214,7 @@ class Ppu {
   _renderBGPixel() {
     int currentTile = bgTile >> 32;
     int palette = currentTile >> ((7 - regX) * 4);
-    int entry = ppuPalettes[palette & 0x0f];
+    int entry = palettes[palette & 0x0f];
 
     return Constant.nesSysPalettes[entry] ?? 0;
   }
@@ -253,14 +232,14 @@ class Ppu {
 
   _fetchLowBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
-    int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
+    int addr = regControl.backgroundPatternAddress + nameTableByte * 16 + fineY;
 
     lowBGTileByte = read(addr);
   }
 
   _fetchHighBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
-    int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
+    int addr = regControl.backgroundPatternAddress + nameTableByte * 16 + fineY;
 
     highBGTileByte = read(addr + 8);
   }
@@ -309,20 +288,20 @@ class Ppu {
     }
   }
 
-  copyX() {
+  void copyX() {
     // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
     regV = (regV & 0xfbe0) | (regT & 0x041f);
   }
 
-  copyY() {
+  void copyY() {
     // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
     regV = (regV & 0x841f) | (regT & 0x7be0);
   }
 
-  _evaluateSprites() {}
+  // _evaluateSprites() {}
 
   // every cycle behaivor is here: https://wiki.nesdev.com/w/index.php/PPU_rendering#Line-by-line_timing
-  clock() {
+  void clock() {
     bool isScanlineVisible = scanline < 240;
     bool isScanlinePreRender = scanline == 261;
     bool isScanlineFetching = isScanlineVisible || isScanlinePreRender;
@@ -331,7 +310,7 @@ class Ppu {
     bool isCyclePreFetch = cycle >= 321 && cycle <= 336;
     bool isCycleFetching = isCycleVisible || isCyclePreFetch;
 
-    bool isRenderingEnabled = fShowBack == 1 || fShowSprite == 1;
+    bool isRenderingEnabled = regMask.bits[MaskFlag.showBackground] || regMask.bits[MaskFlag.showSprite];
 
     // OAMADDR is set to 0 during each of ticks 257-320
     if (isScanlineFetching && cycle >= 257 && cycle <= 320) {
@@ -386,22 +365,22 @@ class Ppu {
 
     // start vertical blanking
     if (scanline == 241 && cycle == 1) {
-      fVerticalBlanking = 1;
+      regStatus1.bits[StatusFlag.verticalBlankStarted] = true;
       fNmiOccurred = 1;
       checkNmiPulled();
     }
 
     // end vertical blanking
     if (isScanlinePreRender && cycle == 1) {
-      fVerticalBlanking = 0;
+      regStatus1.bits[StatusFlag.verticalBlankStarted] = false;
       fNmiOccurred = 0;
     }
 
     _updateCounters();
   }
 
-  _updateCounters() {
-    if (fShowBack == 1 || fShowSprite == 1) {
+  void _updateCounters() {
+    if (regMask.bits[MaskFlag.showBackground] || regMask.bits[MaskFlag.showSprite]) {
       if (scanline == 261 && cycle == 339 && fOddFrames) {
         cycle = 0;
         scanline = 0;
@@ -432,15 +411,15 @@ class Ppu {
     frames = 0;
 
     regController = 0x00;
-    regMask = 0x00;
+    regMask.bits.resetAll();
     regScroll = 0x00;
     dataBuffer = 0x00;
 
-    for (int i = 0; i < ppuVideoRAM.length; i++) {
-      ppuVideoRAM[i] = 0;
+    for (int i = 0; i < videoRAM.length; i++) {
+      videoRAM[i] = 0;
     }
-    for (int i = 0; i < ppuPalettes.length; i++) {
-      ppuPalettes[i] = 0;
+    for (int i = 0; i < palettes.length; i++) {
+      palettes[i] = 0;
     }
   }
 
@@ -460,7 +439,7 @@ class Ppu {
       return;
     }
     if (address == 0x2001) {
-      regMask = value;
+      regMask.bits.value = value;
       return;
     }
     if (address == 0x2003) {
@@ -500,10 +479,10 @@ class Ppu {
     if (address < 0x2000) return cartridge.read(address);
 
     // NameTables (RAM)
-    if (address < 0x3f00) return ppuVideoRAM[nameTableMirroring(address)];
+    if (address < 0x3f00) return videoRAM[nameTableMirroring(address)];
 
     // Palettes
-    return ppuPalettes[address % 0x20];
+    return palettes[address % 0x20];
   }
 
   void write(int address, int value) {
@@ -518,12 +497,12 @@ class Ppu {
 
     // NameTables (RAM)
     if (address < 0x3f00) {
-      ppuVideoRAM[nameTableMirroring(address)] = value;
+      videoRAM[nameTableMirroring(address)] = value;
       return;
     }
 
     // Palettes
-    ppuPalettes[address % 0x20] = value;
+    palettes[address % 0x20] = value;
   }
 
   int nameTableMirroring(int address) {
@@ -551,7 +530,5 @@ class Ppu {
       case Mirroring.singleScreen:
         return address % 0x400;
     }
-
-    return address;
   }
 }

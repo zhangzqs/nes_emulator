@@ -36,7 +36,7 @@ class CPU {
   U8 regA = 0x00; // Accumulator register, 8-bit
   U8 regX = 0x00; // Index register, used for indexed addressing mode, 8-bit
   U8 regY = 0x00; // Index register, 8-bit
-  FlagBit regStatus = FlagBit(CpuStatusFlag.values.length);
+  FlagBits regStatus = FlagBits(CpuStatusFlag.values.length);
 
   int cycles = 0;
   int totalCycles = 0;
