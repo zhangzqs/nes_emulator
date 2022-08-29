@@ -1,4 +1,5 @@
 // NORM: https://wiki.nesdev.org/w/index.php?title=NROM
+import '../../common.dart';
 import '../cartridge.dart';
 import 'mapper.dart';
 
@@ -7,14 +8,13 @@ class Mapper0 implements Mapper {
   Mapper0(this.cartridge);
 
   @override
-  read(int address) {
+  U8 read(U16 address) {
     if (address < 0x2000) {
       return cartridge.chrROM[address];
     }
 
     if (address >= 0x6000 && address < 0x8000) {
-      if (cartridge.battery) return cartridge.sRAM[address - 0x6000];
-      return 0;
+      return cartridge.battery ? cartridge.sRAM[address - 0x6000] : 0;
     }
 
     if (address >= 0x8000 && address < 0xc000) {
@@ -30,14 +30,8 @@ class Mapper0 implements Mapper {
   }
 
   @override
-  write(int address, int value) {
-    if (address < 0x2000) {
-      cartridge.chrROM[address] = value;
-    }
-
-    if (address >= 0x6000 && address < 0x8000) {
-      if (cartridge.battery) cartridge.sRAM[address - 0x6000] = value;
-    }
-    return;
+  void write(U16 address, U8 value) {
+    if (address < 0x2000) cartridge.chrROM[address] = value;
+    if (address >= 0x6000 && address < 0x8000 && cartridge.battery) cartridge.sRAM[address - 0x6000] = value;
   }
 }
