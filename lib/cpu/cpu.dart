@@ -36,7 +36,7 @@ class CPU {
   U8 regA = 0x00; // Accumulator register, 8-bit
   U8 regX = 0x00; // Index register, used for indexed addressing mode, 8-bit
   U8 regY = 0x00; // Index register, 8-bit
-  FlagBit ps = FlagBit(CpuStatusFlag.values.length);
+  FlagBit regStatus = FlagBit(CpuStatusFlag.values.length);
 
   int cycles = 0;
   int totalCycles = 0;
@@ -115,24 +115,24 @@ class CPU {
 
   void nmi() {
     pushStack16Bit(regPC);
-    pushStack(ps.value & 0x30);
+    pushStack(regStatus.value & 0x30);
 
     regPC = read16Bit(0xfffa);
 
     // Set the interrupt disable flag to prevent further interrupts.
-    ps.set(CpuStatusFlag.interruptDisable);
+    regStatus.set(CpuStatusFlag.interruptDisable);
 
     cycles = 7;
   }
 
   void irq() {
     // IRQ is ignored when interrupt disable flag is set.
-    if (ps[CpuStatusFlag.interruptDisable]) return;
+    if (regStatus[CpuStatusFlag.interruptDisable]) return;
 
     pushStack16Bit(regPC);
-    pushStack(ps.value);
+    pushStack(regStatus.value);
 
-    ps.set(CpuStatusFlag.interruptDisable);
+    regStatus.set(CpuStatusFlag.interruptDisable);
 
     regPC = read16Bit(0xfffe);
 
@@ -142,7 +142,7 @@ class CPU {
   void reset() {
     regSP = 0xfd;
     regPC = read16Bit(0xfffc);
-    ps.value = 0x24;
+    regStatus.value = 0x24;
 
     cycles = 7;
   }
