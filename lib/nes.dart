@@ -1,6 +1,6 @@
 import 'board.dart';
+import 'cartridge/cartridge.dart';
 import 'framebuffer.dart';
-import 'rom/cartridge.dart';
 
 class Nes {
   Board board;

@@ -1,17 +1,26 @@
+import 'package:nes_emulator/ram/ram.dart';
+
 import '../bus_adapter.dart';
 import '../common.dart';
-import 'ppu.dart';
 
-class PpuAdapter implements BusAdapter {
-  final Ppu ppu;
-  PpuAdapter(this.ppu);
-
-  @override
-  bool accept(U16 address) => ((0x2000 <= address && address < 0x4000));
+class PpuBusVideoRamAdapter implements BusAdapter {
+  final Ram ram;
+  PpuBusVideoRamAdapter(this.ram);
 
   @override
-  U8 read(U16 address) => ppu.readRegister(0x2000 + address % 0x08);
+  bool accept(U16 address) {
+    // TODO: implement accept
+    throw UnimplementedError();
+  }
 
   @override
-  void write(U16 address, U8 value) => ppu.writeRegister(0x2000 + address % 0x08, value);
+  U8 read(U16 address) {
+    // TODO: implement read
+    throw UnimplementedError();
+  }
+
+  @override
+  void write(U16 address, U8 value) {
+    // TODO: implement write
+  }
 }

@@ -1,7 +1,7 @@
 import 'package:nes_emulator/common.dart';
-import 'package:nes_emulator/rom/mapper/mapper0.dart';
 
 import '../cartridge.dart';
+import 'mapper0.dart';
 
 abstract class Mapper {
   factory Mapper(Cartridge cartridge) {

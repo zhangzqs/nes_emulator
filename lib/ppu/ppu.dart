@@ -8,9 +8,9 @@ import 'package:nes_emulator/ppu/mask.dart';
 import 'package:nes_emulator/ppu/status.dart';
 
 import '../bus_adapter.dart';
+import '../cartridge/cartridge.dart';
 import '../common.dart';
 import '../framebuffer.dart';
-import '../rom/cartridge.dart';
 import '../util.dart';
 
 class Ppu {
@@ -27,15 +27,17 @@ class Ppu {
   final Cartridge cartridge;
 
   /// PPU显存
-  final Uint8List videoRAM;
-  final Uint8List palettes = Uint8List(0x20);
+  final Uint8List videoRAM = Uint8List(0x1000);
+
+  /// 调色板
+  final Uint8List paletteTable = Uint8List(0x20);
 
   Ppu({
     required this.bus,
     required this.cartridge,
     required this.onNmiInterrupted,
     required this.onCycleChanged,
-  }) : videoRAM = cartridge.mirroring == Mirroring.fourScreen ? Uint8List(0x1000) : Uint8List(0x800);
+  });
 
   // https://wiki.nesdev.com/w/index.php/PPUregisters
 
@@ -45,6 +47,7 @@ class Ppu {
   // Mask ($2001) > write
   final regMask = MaskRegister();
 
+  // Status ($2002) < read
   final regStatus1 = StatusRegister();
 
   set regController(int value) {
@@ -55,12 +58,8 @@ class Ppu {
     regT = (regT & 0xf3ff) | (value & 0x03) << 10;
   }
 
-  // Status ($2002) < read
-  int fSign = 0;
-
   int get regStatus {
-    U8 status = (fSign & 0x1f) |
-        regStatus1.bits[StatusFlag.spriteOverflow].asInt() << 5 |
+    U8 status = regStatus1.bits[StatusFlag.spriteOverflow].asInt() << 5 |
         regStatus1.bits[StatusFlag.spriteZeroHit].asInt() << 6;
 
     status |= fNmiOccurred << 7;
@@ -77,7 +76,7 @@ class Ppu {
 
   // The OAM (Object Attribute Memory) is internal memory inside the PPU that contains a display list of up to 64 sprites,
   // where each sprite's information occupies 4 bytes. So OAM takes 256 bytes
-  Uint8List oam = Uint8List(0xff);
+  Uint8List oam = Uint8List(0x100);
 
   // OAM(SPR-RAM) data ($2004) <> read/write
   int get regOamData => oam[regOamAddress];
@@ -142,7 +141,7 @@ class Ppu {
 
   // see: https://wiki.nesdev.com/w/index.php/PPUregisters#The_PPUDATA_read_buffer_.28post-fetch.29
   // the first result should be discard when CPU reading PPUDATA
-  int dataBuffer = 0x00;
+  U8 dataBuffer = 0x00;
 
   // Data ($2007) <> read/write
   // this is the port that CPU read/write data via VRAM.
@@ -214,7 +213,7 @@ class Ppu {
   _renderBGPixel() {
     int currentTile = bgTile >> 32;
     int palette = currentTile >> ((7 - regX) * 4);
-    int entry = palettes[palette & 0x0f];
+    int entry = paletteTable[palette & 0x0f];
 
     return Constant.nesSysPalettes[entry] ?? 0;
   }
@@ -418,15 +417,15 @@ class Ppu {
     for (int i = 0; i < videoRAM.length; i++) {
       videoRAM[i] = 0;
     }
-    for (int i = 0; i < palettes.length; i++) {
-      palettes[i] = 0;
+    for (int i = 0; i < paletteTable.length; i++) {
+      paletteTable[i] = 0;
     }
   }
 
   int readRegister(int address) {
-    if (address == 0x2002) return regStatus;
-    if (address == 0x2004) return regOamData;
-    if (address == 0x2007) return regData;
+    if (address == 0x2) return regStatus;
+    if (address == 0x4) return regOamData;
+    if (address == 0x7) return regData;
 
     throw "Unhandled ppu register reading: ${address.toHex()}";
   }
@@ -434,31 +433,31 @@ class Ppu {
   void writeRegister(int address, int value) {
     value &= 0xff;
 
-    if (address == 0x2000) {
+    if (address == 0x0) {
       regController = value;
       return;
     }
-    if (address == 0x2001) {
+    if (address == 0x1) {
       regMask.bits.value = value;
       return;
     }
-    if (address == 0x2003) {
+    if (address == 0x3) {
       regOamAddress = value;
       return;
     }
-    if (address == 0x2004) {
+    if (address == 0x4) {
       regOamData = value;
       return;
     }
-    if (address == 0x2005) {
+    if (address == 0x5) {
       regScroll = value;
       return;
     }
-    if (address == 0x2006) {
+    if (address == 0x6) {
       regAddress = value;
       return;
     }
-    if (address == 0x2007) {
+    if (address == 0x7) {
       regData = value;
       return;
     }
@@ -482,7 +481,7 @@ class Ppu {
     if (address < 0x3f00) return videoRAM[nameTableMirroring(address)];
 
     // Palettes
-    return palettes[address % 0x20];
+    return paletteTable[address % 0x20];
   }
 
   void write(int address, int value) {
@@ -502,7 +501,7 @@ class Ppu {
     }
 
     // Palettes
-    palettes[address % 0x20] = value;
+    paletteTable[address % 0x20] = value;
   }
 
   int nameTableMirroring(int address) {
@@ -530,5 +529,6 @@ class Ppu {
       case Mirroring.singleScreen:
         return address % 0x400;
     }
+    return address;
   }
 }
