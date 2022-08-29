@@ -2,12 +2,12 @@ library nesbox.ppu;
 
 import 'dart:typed_data';
 
-import 'package:nes_emulator/rom/cartridge.dart';
+import 'package:nes_emulator/constant.dart';
 
 import '../bus_adapter.dart';
 import '../common.dart';
 import '../framebuffer.dart';
-import '../rom/palette.dart';
+import '../rom/cartridge.dart';
 import '../util.dart';
 
 class Ppu {
@@ -147,7 +147,7 @@ class Ppu {
       // w:                  <- 1
 
       regT = (regT & 0xc0ff) | (value & 0x3f) << 8;
-      regT = regT.setBit(14, 0);
+      regT = regT.setBit(14, false);
       regW = 1;
     } else {
       // second write
@@ -237,7 +237,7 @@ class Ppu {
     int palette = currentTile >> ((7 - regX) * 4);
     int entry = ppuPalettes[palette & 0x0f];
 
-    return NES_SYS_PALETTES[entry] ?? 0;
+    return Constant.nesSysPalettes[entry] ?? 0;
   }
 
   _fetchNameTableByte() {
@@ -269,8 +269,8 @@ class Ppu {
     int tile = 0;
 
     for (int i = 7; i >= 0; i--) {
-      int lowBit = lowBGTileByte.getBit(i);
-      int highBit = highBGTileByte.getBit(i);
+      int lowBit = lowBGTileByte.getBit(i).asInt();
+      int highBit = highBGTileByte.getBit(i).asInt();
 
       tile <<= 4;
       tile |= attributeTableByte | highBit << 1 | lowBit;

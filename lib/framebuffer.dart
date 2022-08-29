@@ -5,17 +5,15 @@ import 'dart:typed_data';
 */
 
 class FrameBuffer {
-  FrameBuffer({
-    this.width = 256,
-    this.height = 240,
-  }) {
-    pixels = Uint8List(height * width * 4);
-  }
-
-  late Uint8List pixels;
+  final Uint8List pixels;
 
   int height;
   int width;
+
+  FrameBuffer({
+    this.width = 256,
+    this.height = 240,
+  }) : pixels = Uint8List(height * width * 4);
 
   void setPixel(int x, int y, int color) {
     int index = (y * width + x) * 4;

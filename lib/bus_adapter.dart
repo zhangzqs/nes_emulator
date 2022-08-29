@@ -1,5 +1,4 @@
-typedef U8 = int;
-typedef U16 = int;
+import 'common.dart';
 
 /// 主线的从设备必须实现此接口
 abstract class BusAdapter {

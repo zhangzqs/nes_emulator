@@ -1,4 +1,5 @@
 import '../bus_adapter.dart';
+import '../common.dart';
 import 'ram.dart';
 
 class RamAdapter implements BusAdapter {

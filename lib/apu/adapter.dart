@@ -1,4 +1,5 @@
 import '../bus_adapter.dart';
+import '../common.dart';
 
 class ApuBusAdapter implements BusAdapter {
   @override

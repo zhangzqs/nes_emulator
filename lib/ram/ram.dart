@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import '../bus_adapter.dart';
+import '../common.dart';
 
 class Ram {
   final Uint8List _ramData;
