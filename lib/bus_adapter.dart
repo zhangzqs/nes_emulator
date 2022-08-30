@@ -16,6 +16,35 @@ abstract class BusAdapter implements Readable, Writable {
   bool accept(U16 address);
 }
 
+class FunctionalReadable implements Readable {
+  // 收到读取请求
+  final U8 Function(U16 address)? onRead;
+  FunctionalReadable(this.onRead);
+
+  @override
+  U8 read(U16 address) {
+    if (onRead != null) {
+      return onRead!(address);
+    }
+    throw UnsupportedError('cannot read address: $address');
+  }
+}
+
+class FunctionalWritable implements Writable {
+  // 收到写入请求
+  final void Function(U16 address, U8 value)? onWritten;
+  FunctionalWritable(this.onWritten);
+
+  @override
+  void write(U16 address, U8 value) {
+    if (onWritten != null) {
+      onWritten!(address, value);
+      return;
+    }
+    throw UnsupportedError('cannot write address: $address value: $value');
+  }
+}
+
 class FunctionalBusAdapter implements BusAdapter {
   // 收到读取请求
   final U8 Function(U16 address)? onRead;

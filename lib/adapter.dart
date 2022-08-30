@@ -1,7 +1,6 @@
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
-import 'dma/dma.dart';
 import 'ppu/ppu.dart';
 import 'ram/ram.dart';
 
@@ -43,21 +42,6 @@ class ApuBusAdapter implements BusAdapter {
 
   @override
   void write(U16 address, U8 value) {}
-}
-
-class DmaControllerAdapter implements BusAdapter {
-  final DmaController dmaController;
-  final U8 targetPage;
-  DmaControllerAdapter(this.dmaController, this.targetPage);
-
-  @override
-  bool accept(U16 address) => address == 0x4014;
-
-  @override
-  U8 read(U16 address) => throw UnsupportedError('DMA controller cannot be read');
-
-  @override
-  void write(U16 address, U8 value) => dmaController.transferPage(value, targetPage);
 }
 
 class SoundChannelAdapter implements BusAdapter {

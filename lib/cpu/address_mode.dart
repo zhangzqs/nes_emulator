@@ -34,7 +34,7 @@ bool isPageCrossed(int addr1, int addr2) {
 // see: https://wiki.nesdev.com/w/index.php/CPU_addressing_modes
 final ZeroPage = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
 
       return AddressModeResult(
         bytes: bytes,
@@ -46,7 +46,7 @@ final ZeroPage = AddressMode(
 
 final ZeroPageX = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
 
       return AddressModeResult(
         bytes: bytes,
@@ -58,7 +58,7 @@ final ZeroPageX = AddressMode(
 
 final ZeroPageY = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
       return AddressModeResult(
         bytes: bytes,
         address: (bytes + cpu.regY) & 0xff,
@@ -69,7 +69,7 @@ final ZeroPageY = AddressMode(
 
 final Absolute = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read16Bit(cpu.regPC + 1);
+      final bytes = cpu.readBus16Bit(cpu.regPC + 1);
 
       return AddressModeResult(
         bytes: bytes,
@@ -81,7 +81,7 @@ final Absolute = AddressMode(
 
 final AbsoluteX = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read16Bit(cpu.regPC + 1);
+      final bytes = cpu.readBus16Bit(cpu.regPC + 1);
 
       return AddressModeResult(
         bytes: bytes,
@@ -94,7 +94,7 @@ final AbsoluteX = AddressMode(
 
 final AbsoluteY = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read16Bit(cpu.regPC + 1);
+      final bytes = cpu.readBus16Bit(cpu.regPC + 1);
 
       return AddressModeResult(
         bytes: bytes,
@@ -118,7 +118,7 @@ final Accumulator = AddressMode(
 
 final Immediate = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
 
       return AddressModeResult(bytes: bytes, pcStepSize: 2, address: cpu.regPC + 1);
     },
@@ -126,7 +126,7 @@ final Immediate = AddressMode(
 
 final Relative = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
 
       // offset is a signed integer
       int offset = bytes >= 0x80 ? bytes - 0x100 : bytes;
@@ -137,25 +137,25 @@ final Relative = AddressMode(
 
 final Indirect = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read16Bit(cpu.regPC + 1);
+      final bytes = cpu.readBus16Bit(cpu.regPC + 1);
 
-      return AddressModeResult(bytes: bytes, pcStepSize: 3, address: cpu.read16BitUncrossPage(bytes));
+      return AddressModeResult(bytes: bytes, pcStepSize: 3, address: cpu.readBus16BitUncrossPage(bytes));
     },
     display: (op) => "");
 
 final IndexedIndirect = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
 
       return AddressModeResult(
-          bytes: bytes, pcStepSize: 2, address: cpu.read16BitUncrossPage((bytes + cpu.regX) & 0xff));
+          bytes: bytes, pcStepSize: 2, address: cpu.readBus16BitUncrossPage((bytes + cpu.regX) & 0xff));
     },
     display: (op) => "");
 
 final IndirectIndexed = AddressMode(
     call: (CPU cpu) {
-      final bytes = cpu.read(cpu.regPC + 1);
-      final address = cpu.read16BitUncrossPage(bytes) + cpu.regY;
+      final bytes = cpu.readBus8Bit(cpu.regPC + 1);
+      final address = cpu.readBus16BitUncrossPage(bytes) + cpu.regY;
 
       return AddressModeResult(
         bytes: bytes,

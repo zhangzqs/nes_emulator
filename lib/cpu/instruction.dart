@@ -12,13 +12,13 @@ class Instruction {
   matchAbbr(String input) => bool;
 }
 
-branchSuccess(CPU cpu) {
-  cpu.cycles += isPageCrossed(cpu.dataAddress, cpu.regPC + 1) ? 2 : 1;
-  cpu.regPC = cpu.dataAddress;
+void branchSuccess(CPU cpu) {
+  cpu._remainingCycles += isPageCrossed(cpu._dataAddress, cpu.regPC + 1) ? 2 : 1;
+  cpu.regPC = cpu._dataAddress;
 }
 
 final ADC = Instruction("ADC", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int tmp = cpu.regA + fetched + cpu.regStatus[CpuStatusFlag.carry].asInt();
 
   // overflow is basically negative + negative = positive
@@ -32,7 +32,7 @@ final ADC = Instruction("ADC", (CPU cpu) {
 });
 
 final AND = Instruction("AND", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regA &= fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
@@ -40,16 +40,16 @@ final AND = Instruction("AND", (CPU cpu) {
 });
 
 final ASL = Instruction("ASL", (CPU cpu) {
-  int tmp = cpu.op.mode == Accumulator ? cpu.regA : cpu.read(cpu.dataAddress);
+  int tmp = cpu._op.mode == Accumulator ? cpu.regA : cpu.readBus8Bit(cpu._dataAddress);
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp.getBit(7);
 
   tmp = (tmp << 1) & 0xff;
 
-  if (cpu.op.mode == Accumulator) {
+  if (cpu._op.mode == Accumulator) {
     cpu.regA = tmp;
   } else {
-    cpu.write(cpu.dataAddress, tmp);
+    cpu.writeBus8Bit(cpu._dataAddress, tmp);
   }
 
   cpu.regStatus[CpuStatusFlag.zero] = tmp.getZeroBit();
@@ -57,7 +57,7 @@ final ASL = Instruction("ASL", (CPU cpu) {
 });
 
 final BIT = Instruction("BIT", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int test = fetched & cpu.regA;
 
   cpu.regStatus[CpuStatusFlag.zero] = test.getZeroBit();
@@ -104,7 +104,7 @@ final BRK = Instruction("BRK", (CPU cpu) {
   cpu.regStatus[CpuStatusFlag.interruptDisable] = true;
   cpu.regStatus[CpuStatusFlag.breakCommand] = true;
 
-  cpu.regPC = cpu.read16Bit(0xfffe);
+  cpu.regPC = cpu.readBus16Bit(0xfffe);
 });
 
 final CLC = Instruction("CLC", (CPU cpu) => cpu.regStatus[CpuStatusFlag.carry] = false);
@@ -125,7 +125,7 @@ final CLV = Instruction(
 );
 
 final CMP = Instruction("CMP", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int tmp = cpu.regA - fetched;
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp >= 0;
@@ -134,7 +134,7 @@ final CMP = Instruction("CMP", (CPU cpu) {
 });
 
 final CPX = Instruction("CPX", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int tmp = cpu.regX - fetched;
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp >= 0;
@@ -143,7 +143,7 @@ final CPX = Instruction("CPX", (CPU cpu) {
 });
 
 final CPY = Instruction("CPY", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int tmp = cpu.regY - fetched;
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp >= 0;
@@ -152,10 +152,10 @@ final CPY = Instruction("CPY", (CPU cpu) {
 });
 
 final DEC = Instruction("DEC", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   fetched--;
   fetched &= 0xff;
-  cpu.write(cpu.dataAddress, fetched & 0xff);
+  cpu.writeBus8Bit(cpu._dataAddress, fetched & 0xff);
 
   cpu.regStatus[CpuStatusFlag.zero] = fetched.getZeroBit();
   cpu.regStatus[CpuStatusFlag.negative] = fetched.getBit(7);
@@ -176,7 +176,7 @@ final DEY = Instruction("DEY", (CPU cpu) {
 });
 
 final EOR = Instruction("EOR", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regA ^= fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
@@ -184,11 +184,11 @@ final EOR = Instruction("EOR", (CPU cpu) {
 });
 
 final INC = Instruction("INC", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   fetched++;
   fetched &= 0xff;
 
-  cpu.write(cpu.dataAddress, fetched & 0xff);
+  cpu.writeBus8Bit(cpu._dataAddress, fetched & 0xff);
 
   cpu.regStatus[CpuStatusFlag.zero] = fetched.getZeroBit();
   cpu.regStatus[CpuStatusFlag.negative] = fetched.getBit(7);
@@ -210,16 +210,16 @@ final INY = Instruction("INY", (CPU cpu) {
 
 final JMP = Instruction(
   "JMP",
-  (CPU cpu) => cpu.regPC = cpu.dataAddress,
+  (CPU cpu) => cpu.regPC = cpu._dataAddress,
 );
 
 final JSR = Instruction("JSR", (CPU cpu) {
   cpu.pushStack16Bit(cpu.regPC - 1);
-  cpu.regPC = cpu.dataAddress;
+  cpu.regPC = cpu._dataAddress;
 });
 
 final LDA = Instruction("LDA", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regA = fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
@@ -227,7 +227,7 @@ final LDA = Instruction("LDA", (CPU cpu) {
 });
 
 final LDX = Instruction("LDX", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regX = fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regX.getZeroBit();
@@ -235,7 +235,7 @@ final LDX = Instruction("LDX", (CPU cpu) {
 });
 
 final LDY = Instruction("LDY", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regY = fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regY.getZeroBit();
@@ -243,15 +243,15 @@ final LDY = Instruction("LDY", (CPU cpu) {
 });
 
 final LSR = Instruction("LSR", (CPU cpu) {
-  int tmp = cpu.op.mode == Accumulator ? cpu.regA : cpu.read(cpu.dataAddress);
+  int tmp = cpu._op.mode == Accumulator ? cpu.regA : cpu.readBus8Bit(cpu._dataAddress);
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp.getBit(0);
   tmp = (tmp >> 1) & 0xff;
 
-  if (cpu.op.mode == Accumulator) {
+  if (cpu._op.mode == Accumulator) {
     cpu.regA = tmp;
   } else {
-    cpu.write(cpu.dataAddress, tmp);
+    cpu.writeBus8Bit(cpu._dataAddress, tmp);
   }
 
   cpu.regStatus[CpuStatusFlag.zero] = tmp.getZeroBit();
@@ -259,7 +259,7 @@ final LSR = Instruction("LSR", (CPU cpu) {
 });
 
 final ORA = Instruction("ORA", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regA |= fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
@@ -292,35 +292,35 @@ final PLP = Instruction("PLP", (CPU cpu) {
 });
 
 final ROL = Instruction("ROL", (CPU cpu) {
-  int tmp = cpu.op.mode == Accumulator ? cpu.regA : cpu.read(cpu.dataAddress);
+  int tmp = cpu._op.mode == Accumulator ? cpu.regA : cpu.readBus8Bit(cpu._dataAddress);
 
   bool oldCarry = cpu.regStatus[CpuStatusFlag.carry];
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp.getBit(7);
   tmp = (tmp << 1) | oldCarry.asInt();
 
-  if (cpu.op.mode == Accumulator) {
+  if (cpu._op.mode == Accumulator) {
     cpu.regA = tmp & 0xff;
     cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
   } else {
-    cpu.write(cpu.dataAddress, tmp);
+    cpu.writeBus8Bit(cpu._dataAddress, tmp);
   }
 
   cpu.regStatus[CpuStatusFlag.negative] = tmp.getBit(7);
 });
 
 final ROR = Instruction("ROR", (CPU cpu) {
-  int tmp = cpu.op.mode == Accumulator ? cpu.regA : cpu.read(cpu.dataAddress);
+  int tmp = cpu._op.mode == Accumulator ? cpu.regA : cpu.readBus8Bit(cpu._dataAddress);
   bool oldCarry = cpu.regStatus[CpuStatusFlag.carry];
 
   cpu.regStatus[CpuStatusFlag.carry] = tmp.getBit(0);
   tmp = (tmp >> 1).setBit(7, oldCarry);
 
-  if (cpu.op.mode == Accumulator) {
+  if (cpu._op.mode == Accumulator) {
     cpu.regA = tmp;
     cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
   } else {
-    cpu.write(cpu.dataAddress, tmp);
+    cpu.writeBus8Bit(cpu._dataAddress, tmp);
   }
 
   cpu.regStatus[CpuStatusFlag.negative] = tmp.getBit(7);
@@ -341,7 +341,7 @@ final RTS = Instruction(
 );
 
 final SBC = Instruction("SBC", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   int tmp = cpu.regA - fetched - (1 - cpu.regStatus[CpuStatusFlag.carry].asInt());
 
   cpu.regStatus[CpuStatusFlag.overflow] = (tmp ^ cpu.regA) & 0x80 != 0 && (cpu.regA ^ fetched) & 0x80 != 0;
@@ -361,11 +361,11 @@ final SED = Instruction("SED", (CPU cpu) => cpu.regStatus[CpuStatusFlag.decimalM
 
 final SEI = Instruction("SEI", (CPU cpu) => cpu.regStatus[CpuStatusFlag.interruptDisable] = true);
 
-final STA = Instruction("STA", (CPU cpu) => cpu.write(cpu.dataAddress, cpu.regA));
+final STA = Instruction("STA", (CPU cpu) => cpu.writeBus8Bit(cpu._dataAddress, cpu.regA));
 
-final STX = Instruction("STX", (CPU cpu) => cpu.write(cpu.dataAddress, cpu.regX));
+final STX = Instruction("STX", (CPU cpu) => cpu.writeBus8Bit(cpu._dataAddress, cpu.regX));
 
-final STY = Instruction("STY", (CPU cpu) => cpu.write(cpu.dataAddress, cpu.regY));
+final STY = Instruction("STY", (CPU cpu) => cpu.writeBus8Bit(cpu._dataAddress, cpu.regY));
 
 final TAX = Instruction("TAX", (CPU cpu) {
   cpu.regX = cpu.regA;
@@ -410,7 +410,7 @@ final ALR = Instruction("ALR", (CPU cpu) {
 });
 
 final ANC = Instruction("ANC", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regA &= fetched;
 
   cpu.regStatus[CpuStatusFlag.carry] = cpu.regA.getBit(7);
@@ -432,7 +432,7 @@ final AXS = Instruction("AXS", (CPU cpu) {
 });
 
 final LAX = Instruction("LAX", (CPU cpu) {
-  int fetched = cpu.read(cpu.dataAddress);
+  int fetched = cpu.readBus8Bit(cpu._dataAddress);
   cpu.regX = cpu.regA = fetched;
 
   cpu.regStatus[CpuStatusFlag.zero] = cpu.regA.getZeroBit();
@@ -440,7 +440,7 @@ final LAX = Instruction("LAX", (CPU cpu) {
 });
 
 final SAX = Instruction("SAX", (CPU cpu) {
-  cpu.write(cpu.dataAddress, cpu.regX & cpu.regA);
+  cpu.writeBus8Bit(cpu._dataAddress, cpu.regX & cpu.regA);
 });
 
 final DCP = Instruction("DCP", (CPU cpu) {

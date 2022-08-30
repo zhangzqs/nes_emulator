@@ -2,15 +2,15 @@ import '../bus_adapter.dart';
 import '../common.dart';
 
 class DmaController {
-  final BusAdapter sourceBus;
-  final BusAdapter targetBus;
-  DmaController({required this.sourceBus, required this.targetBus});
+  final Readable source;
+  final Writable target;
+  DmaController({required this.source, required this.target});
 
   // 开始传送
   void transfer(U16 sourceAddress, U16 size, U16 targetAddress) {
     for (int i = 0; i < size; i++) {
-      final val = sourceBus.read(sourceAddress + i);
-      targetBus.write(targetAddress + i, val);
+      final val = source.read(sourceAddress + i);
+      target.write(targetAddress + i, val);
     }
   }
 

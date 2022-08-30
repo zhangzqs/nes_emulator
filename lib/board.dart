@@ -12,37 +12,32 @@ import 'ram/ram.dart';
 
 /// 模拟NES主板
 class Board {
-  final bus = Bus();
+  final cpuBus = Bus();
+
   late Ppu ppu;
   late CPU cpu;
-  late Ram ram;
+
+  /// nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
+  final Ram ram = Ram(0x800);
 
   Board(ICartridge cartridge) {
-    // nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
-    ram = Ram(0x800);
-
     // cpu作为总线的master设备需要拿到总线对象
-    cpu = CPU(bus);
+    cpu = CPU(bus: cpuBus);
 
     ppu = Ppu(
-      bus: bus,
-      cartridgeAdapterForPpu: CartridgeAdapterForPpu(cartridge),
+      ppuBus: CartridgeAdapterForPpu(cartridge),
       mirroring: cartridge.mirroring,
-      onNmiInterrupted: () {
-        cpu.interrupt = CpuInterrupt.nmi;
-      },
-      onCycleChanged: (int increased) {
-        cpu.cycles += increased;
-      },
+      onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
     );
 
-    final dma = DmaController(
-      sourceBus: bus,
-      targetBus: FunctionalBusAdapter(
-        onWritten: (U16 address, U8 value) {
-          ppu.oam[address] = value;
-        },
+    final dmaControllerAdapter = cpu.getDmaControllerAdapter(
+      DmaController(
+        source: cpuBus,
+        target: FunctionalWritable((U16 index, U8 value) {
+          ppu.oam[index] = value;
+        }),
       ),
+      0,
     );
 
     // 注册总线上的所有从设备，地址映射关系由各自适配器内部负责
@@ -50,12 +45,12 @@ class Board {
       RamAdapter(ram),
       PpuAdapter(ppu),
       ApuBusAdapter(),
-      DmaControllerAdapter(dma, 0),
+      dmaControllerAdapter,
       SoundChannelAdapter(),
       JoyPadAdapter(),
       UnusedAdapter(),
       CartridgeAdapterForCpu(cartridge),
-    ].forEach(bus.registerDevice);
+    ].forEach(cpuBus.registerDevice);
 
     reset();
   }

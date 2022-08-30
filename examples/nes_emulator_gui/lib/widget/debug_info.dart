@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/nes.dart';
 import 'package:nes_emulator/ppu/adapter.dart';
 import 'package:nes_emulator/ppu/tile_reader.dart';
+import 'package:nes_emulator_gui/main.dart';
 
 import '../nesbox_controller.dart';
 import 'frame_canvas.dart';
@@ -49,7 +50,7 @@ class DebugInfoWidget extends HookWidget {
                 ),
               ],
             )),
-            Text(nes.board.cpu.totalCycles.toString()),
+            Text('${(nes.board.cpu.totalCycles / (1024 * 1024)) / (DateTime.now().second - startTime.second)}'),
           ],
         ));
   }

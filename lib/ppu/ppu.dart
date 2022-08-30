@@ -2,7 +2,6 @@ library nesbox.ppu;
 
 import 'dart:typed_data';
 
-import 'package:nes_emulator/constant.dart';
 import 'package:nes_emulator/ppu/controller.dart';
 import 'package:nes_emulator/ppu/mask.dart';
 import 'package:nes_emulator/ppu/status.dart';
@@ -11,19 +10,14 @@ import '../bus_adapter.dart';
 import '../common.dart';
 import '../framebuffer.dart';
 import '../util.dart';
+import 'palettes.dart';
 
 class Ppu {
   /// nmi中断信号
   final VoidCallback onNmiInterrupted;
 
-  /// 向cpu发送时钟同步信号，cpu时钟数应该增加increased
-  final void Function(int increased) onCycleChanged;
-
-  /// 用于DMA内存访问
-  final BusAdapter bus;
-
   /// 游戏卡带
-  final BusAdapter cartridgeAdapterForPpu;
+  final BusAdapter ppuBus;
 
   /// PPU显存
   final Uint8List videoRAM = Uint8List(0x1000);
@@ -34,11 +28,9 @@ class Ppu {
   final Mirroring mirroring;
 
   Ppu({
-    required this.bus,
-    required this.cartridgeAdapterForPpu,
+    required this.ppuBus,
     required this.mirroring,
     required this.onNmiInterrupted,
-    required this.onCycleChanged,
   });
 
   // https://wiki.nesdev.com/w/index.php/PPUregisters
@@ -169,15 +161,6 @@ class Ppu {
     regV += regControl.videoRamAddressIncrement;
   }
 
-  // OAM DMA ($4014) > write
-  set regDMA(int value) {
-    int page = value << 8;
-
-    for (int address = page; address < page + 0xff; address++) {
-      oam[regOamAddress++] = bus.read(address);
-    }
-  }
-
   // https://wiki.nesdev.org/w/index.php?title=NMI
   int fNmiOccurred = 0; // 1bit
 
@@ -217,7 +200,7 @@ class Ppu {
     int palette = currentTile >> ((7 - regX) * 4);
     int entry = paletteTable[palette & 0x0f];
 
-    return Constant.nesSysPalettes[entry] ?? 0;
+    return nesSysPalettes[entry] ?? 0;
   }
 
   _fetchNameTableByte() {
@@ -464,12 +447,6 @@ class Ppu {
       return;
     }
 
-    if (address == 0x4014) {
-      regDMA = value;
-      onCycleChanged(fOddFrames ? 514 : 513);
-      return;
-    }
-
     throw "Unhandled register writing: ${address.toHex()}";
   }
 
@@ -477,7 +454,7 @@ class Ppu {
     address = (address & 0xffff) % 0x4000;
 
     // CHR-ROM or Pattern Tables
-    if (address < 0x2000) return cartridgeAdapterForPpu.read(address);
+    if (address < 0x2000) return ppuBus.read(address);
 
     // NameTables (RAM)
     if (address < 0x3f00) return videoRAM[nameTableMirroring(address)];
@@ -492,7 +469,7 @@ class Ppu {
 
     // CHR-ROM or Pattern Tables
     if (address < 0x2000) {
-      cartridgeAdapterForPpu.write(address, value);
+      ppuBus.write(address, value);
       return;
     }
 

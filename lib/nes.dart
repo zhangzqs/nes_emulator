@@ -4,34 +4,29 @@ import 'framebuffer.dart';
 
 class Nes {
   Board board;
-  double fps = 0;
 
   final Cartridge cartridge;
   Nes(this.cartridge) : board = Board(cartridge);
 
+  /// 执行一个时钟周期
   void clock() {
-    int times = board.cpu.clock() * 3;
-
-    while (times-- > 0) {
+    // 运行一次cpu
+    board.cpu.runOneClock();
+    // 执行三次ppu
+    for (int i = 0; i < 3; i++) {
       board.ppu.clock();
     }
   }
 
+  /// 执行下一步CPU指令
   void stepInstruction() {
     do {
       clock();
-    } while (board.cpu.cycles != 0);
+    } while (board.cpu.isRunningInstruction());
   }
 
   FrameBuffer stepFrame() {
-    int frame = board.ppu.frames;
-    var start = DateTime.now();
-    while (board.ppu.frames == frame) {
-      clock();
-    }
-
-    // update fps
-    fps = 1000 / DateTime.now().difference(start).inMilliseconds;
+    clock();
     return board.ppu.frame;
   }
 }

@@ -31,9 +31,7 @@ class CartridgeAdapterForPpu implements BusAdapter {
   CartridgeAdapterForPpu(this.cartridge);
 
   @override
-  bool accept(U16 address) {
-    return true;
-  }
+  bool accept(U16 address) => address >= 0x0000 && address < 0x2000;
 
   @override
   U8 read(U16 address) {
