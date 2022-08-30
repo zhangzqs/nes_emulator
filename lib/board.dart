@@ -34,7 +34,8 @@ class Board {
       DmaController(
         source: cpuBus,
         target: FunctionalWritable((U16 index, U8 value) {
-          ppu.oam[index] = value;
+          // 写256次2004端口
+          ppu.regOamData = value;
         }),
       ),
       0,
