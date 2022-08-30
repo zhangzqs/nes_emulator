@@ -6,6 +6,7 @@ import 'bus.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
 import 'cpu/cpu.dart';
+import 'ppu/adapter.dart';
 import 'ppu/ppu.dart';
 import 'ram/ram.dart';
 
@@ -16,7 +17,7 @@ class Board {
   late CPU cpu;
   late Ram ram;
 
-  Board(Cartridge cartridge) {
+  Board(ICartridge cartridge) {
     // nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
     ram = Ram(0x800);
 
@@ -25,7 +26,8 @@ class Board {
 
     ppu = Ppu(
       bus: bus,
-      cartridge: cartridge,
+      cartridgeAdapterForPpu: CartridgeAdapterForPpu(cartridge),
+      mirroring: cartridge.mirroring,
       onNmiInterrupted: () {
         cpu.interrupt = CpuInterrupt.nmi;
       },
@@ -52,7 +54,7 @@ class Board {
       SoundChannelAdapter(),
       JoyPadAdapter(),
       UnusedAdapter(),
-      CartridgeAdapter(cartridge),
+      CartridgeAdapterForCpu(cartridge),
     ].forEach(bus.registerDevice);
 
     reset();

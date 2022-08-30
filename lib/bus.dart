@@ -1,6 +1,8 @@
 import 'bus_adapter.dart';
 import 'common.dart';
 
+
+
 /// 可以把总线本身也看作可寻址的设备
 class Bus implements BusAdapter {
   final List<BusAdapter> devices = [];

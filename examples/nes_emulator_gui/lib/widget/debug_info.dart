@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/nes.dart';
+import 'package:nes_emulator/ppu/adapter.dart';
+import 'package:nes_emulator/ppu/tile_reader.dart';
 
 import '../nesbox_controller.dart';
 import 'frame_canvas.dart';
@@ -28,9 +30,23 @@ class DebugInfoWidget extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: AspectRatio(aspectRatio: 1, child: FrameCanvas(frame: nes.cartridge.firstTileFrame))),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: FrameCanvas(
+                      frame: TileFrameReader(CartridgeAdapterForPpu(nes.cartridge)).createTileFrame(),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: AspectRatio(aspectRatio: 1, child: FrameCanvas(frame: nes.cartridge.secondTileFrame))),
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: FrameCanvas(
+                      frame: TileFrameReader(CartridgeAdapterForPpu(nes.cartridge)).createTileFrame(0x1000),
+                    ),
+                  ),
+                ),
               ],
             )),
             Text(nes.board.cpu.totalCycles.toString()),

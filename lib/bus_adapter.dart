@@ -1,13 +1,17 @@
 import 'common.dart';
 
-/// 主线的从设备必须实现此接口
-abstract class BusAdapter {
+abstract class Readable {
   /// 读取数据
   U8 read(U16 address);
+}
 
+abstract class Writable {
   /// 写入数据
   void write(U16 address, U8 value);
+}
 
+/// 主线的从设备必须实现此接口
+abstract class BusAdapter implements Readable, Writable {
   /// 判定该设备是否接受此地址
   bool accept(U16 address);
 }

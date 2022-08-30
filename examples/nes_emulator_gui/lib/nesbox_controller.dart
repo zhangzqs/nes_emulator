@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/cartridge/cartridge.dart';
+import 'package:nes_emulator/cartridge/nes_file.dart';
 import 'package:nes_emulator/framebuffer.dart';
 import 'package:nes_emulator/nes.dart';
 
@@ -23,7 +24,11 @@ class NesBoxController {
 
   loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
     final ByteData gameBytes = await rootBundle.load(gamePath);
-    nes = Nes(Cartridge(gameBytes.buffer.asUint8List()));
+    final nesFile = NesFileReader(gameBytes.buffer.asUint8List());
+    final cartridge = Cartridge(nesFile);
+    print(nesFile);
+    print(cartridge);
+    nes = Nes(cartridge);
     _gameLoadedCompleter.complete('loaded');
     runFrameLoop();
   }

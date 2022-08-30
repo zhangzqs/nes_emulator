@@ -8,7 +8,6 @@ import 'package:nes_emulator/ppu/mask.dart';
 import 'package:nes_emulator/ppu/status.dart';
 
 import '../bus_adapter.dart';
-import '../cartridge/cartridge.dart';
 import '../common.dart';
 import '../framebuffer.dart';
 import '../util.dart';
@@ -24,7 +23,7 @@ class Ppu {
   final BusAdapter bus;
 
   /// 游戏卡带
-  final Cartridge cartridge;
+  final BusAdapter cartridgeAdapterForPpu;
 
   /// PPU显存
   final Uint8List videoRAM = Uint8List(0x1000);
@@ -32,9 +31,12 @@ class Ppu {
   /// 调色板
   final Uint8List paletteTable = Uint8List(0x20);
 
+  final Mirroring mirroring;
+
   Ppu({
     required this.bus,
-    required this.cartridge,
+    required this.cartridgeAdapterForPpu,
+    required this.mirroring,
     required this.onNmiInterrupted,
     required this.onCycleChanged,
   });
@@ -475,7 +477,7 @@ class Ppu {
     address = (address & 0xffff) % 0x4000;
 
     // CHR-ROM or Pattern Tables
-    if (address < 0x2000) return cartridge.read(address);
+    if (address < 0x2000) return cartridgeAdapterForPpu.read(address);
 
     // NameTables (RAM)
     if (address < 0x3f00) return videoRAM[nameTableMirroring(address)];
@@ -490,7 +492,7 @@ class Ppu {
 
     // CHR-ROM or Pattern Tables
     if (address < 0x2000) {
-      cartridge.write(address, value);
+      cartridgeAdapterForPpu.write(address, value);
       return;
     }
 
@@ -508,7 +510,7 @@ class Ppu {
     address = address % 0x1000;
     int chunk = (address / 0x400).floor();
 
-    switch (cartridge.mirroring) {
+    switch (mirroring) {
       // [A][A] --> [0x2000][0x2400]
       // [B][B] --> [0x2800][0x2c00]
       case Mirroring.horizontal:

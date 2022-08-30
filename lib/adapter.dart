@@ -104,16 +104,22 @@ class UnusedAdapter implements BusAdapter {
 }
 
 // Cartridge(ExpansionRom/SRam/Rom)
-class CartridgeAdapter implements BusAdapter {
-  final Cartridge cartridge;
-  CartridgeAdapter(this.cartridge);
+class CartridgeAdapterForCpu implements BusAdapter {
+  final ICartridge cartridge;
+  CartridgeAdapterForCpu(this.cartridge);
 
   @override
   bool accept(U16 address) => (0x4020 <= address && address <= 0xFFFF);
 
   @override
-  U8 read(U16 address) => cartridge.read(address);
+  U8 read(U16 address) {
+    final offset = cartridge.mapper.cpuMapRead(address);
+    return cartridge.prgRom[offset];
+  }
 
   @override
-  void write(U16 address, U8 value) => cartridge.write(address, value);
+  void write(U16 address, U8 value) {
+    final offset = cartridge.mapper.cpuMapRead(address);
+    cartridge.prgRom[offset] = value;
+  }
 }
