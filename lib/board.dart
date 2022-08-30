@@ -31,14 +31,14 @@ class Board {
     );
 
     final dmaControllerAdapter = cpu.getDmaControllerAdapter(
-      DmaController(
+      dmaController: DmaController(
         source: cpuBus,
         target: FunctionalWritable((U16 index, U8 value) {
           // 写256次2004端口
           ppu.regOamData = value;
         }),
       ),
-      0,
+      targetPage: 0,
     );
 
     // 注册总线上的所有从设备，地址映射关系由各自适配器内部负责

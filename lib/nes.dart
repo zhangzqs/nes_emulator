@@ -8,7 +8,7 @@ class Nes {
   final Cartridge cartridge;
   Nes(this.cartridge) : board = Board(cartridge);
 
-  /// 执行一个时钟周期
+  /// 执行一个cpu时钟周期
   void clock() {
     // 运行一次cpu
     board.cpu.runOneClock();
@@ -26,7 +26,12 @@ class Nes {
   }
 
   FrameBuffer stepFrame() {
-    clock();
+    int frame = board.ppu.frames;
+    while (board.ppu.frames == frame) {
+      // clock可能会影响frame
+      clock();
+    }
+
     return board.ppu.frame;
   }
 }

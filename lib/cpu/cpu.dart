@@ -156,10 +156,20 @@ class CPU {
   }
 
   /// 读取总线
-  U8 readBus8Bit(U16 address) => bus.read(address);
+  U8 readBus8Bit(U16 address) {
+    if (address == 0x4014) {
+      print('dma read');
+    }
+    return bus.read(address);
+  }
 
   /// 写入总线
-  void writeBus8Bit(U16 address, U8 value) => bus.write(address, value);
+  void writeBus8Bit(U16 address, U8 value) {
+    if (address == 0x4014) {
+      print('dma write');
+    }
+    bus.write(address, value);
+  }
 
   U16 readBus16Bit(U16 address) => readBus8Bit(address + 1) << 8 | readBus8Bit(address);
 
@@ -168,8 +178,11 @@ class CPU {
     return readBus8Bit(nextAddress) << 8 | readBus8Bit(address);
   }
 
-  BusAdapter getDmaControllerAdapter(DmaController dmaController, int targetPage) {
-    return DmaControllerAdapter(this, dmaController, 0);
+  BusAdapter getDmaControllerAdapter({
+    required DmaController dmaController,
+    required int targetPage,
+  }) {
+    return DmaControllerAdapter(this, dmaController, targetPage);
   }
 }
 
@@ -181,20 +194,23 @@ class DmaControllerAdapter implements BusAdapter {
   DmaControllerAdapter(this.cpu, this.dmaController, this.targetPage);
 
   @override
-  bool accept(U16 address) => address == 0x4014;
+  bool accept(U16 address) {
+    if (address == 0x4014) {
+      print('dma');
+    }
+    return address == 0x4014;
+  }
 
   @override
   U8 read(U16 address) => throw UnsupportedError('DMA controller cannot be read');
 
   @override
   void write(U16 address, U8 value) {
-    if (address == 0x4014) {
-      // 启动DMA传输
-      final page = cpu.readBus8Bit(value); // 获得页号
-      // 开始拷贝
-      dmaController.transferPage(page, targetPage);
-      // 写入完毕需要更新剩余周期数, 之前的总周期若为奇数则等待513周期，偶数为514
-      cpu._remainingCycles += 513 + (cpu.totalCycles % 2);
-    }
+    // 启动DMA传输
+    final page = cpu.readBus8Bit(value); // 获得页号
+    // 开始拷贝
+    dmaController.transferPage(page, targetPage);
+    // 写入完毕需要更新剩余周期数, 之前的总周期若为奇数则等待513周期，偶数为514
+    cpu._remainingCycles += 513 + (cpu.totalCycles % 2);
   }
 }
