@@ -26,33 +26,27 @@ class JoyPadController implements IStandardController {
     _regKeyState[key] = false;
   }
 
-  // 手柄是否处于选通状态
-  bool _inStrobeState = false;
-
-  U8 _keyState = 0;
+  U8 _strobe = 0;
+  U8 _index = 0;
 
   @override
-  set strobe(U8 val) {
-    bool strobeOld = _inStrobeState;
-    _inStrobeState = val.getBit(0);
-    if (strobeOld && (!_inStrobeState)) {
-      for (final key in JoyPadKey.values) {
-        if (_regKeyState[key]) {
-          _keyState |= (1 << key.index);
-        }
-      }
+  set regStrobe(U8 val) {
+    _strobe = val;
+    if (_strobe & 1 == 1) {
+      _index = 0;
     }
   }
 
   @override
-  U8 get keyState {
-    bool isKeyPressed;
-    if (_inStrobeState) {
-      isKeyPressed = _regKeyState[JoyPadKey.a];
-    } else {
-      isKeyPressed = _keyState.getBit(0);
-      _keyState >>= 1;
+  U8 get regKeyState {
+    U8 value = 0;
+    if (_index < 8 && _regKeyState[JoyPadKey.values[_index]]) {
+      value = 1;
     }
-    return 0x40 | isKeyPressed.asInt();
+    _index++;
+    if (_strobe & 1 == 1) {
+      _index = 0;
+    }
+    return value;
   }
 }
