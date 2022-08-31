@@ -16,7 +16,7 @@ class Board {
   final cpuBus = Bus();
   final ppuBus = Bus();
 
-  late Ppu ppu;
+  late MyPpu ppu;
   late CPU cpu;
 
   /// nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
@@ -35,16 +35,16 @@ class Board {
   }) {
     [
       PatternTablesAdapterForPpu(cartridge),
-      NameTablesAdapterForPpu(nameTablesRam),
+      NameTablesAdapterForPpu(nameTablesRam, cartridge.mirroring),
       PalettesAdapterForPpu(palettesRam),
+      MirrorAdapterForPpu(ppuBus),
     ].forEach(ppuBus.registerDevice);
 
     // cpu作为总线的master设备需要拿到总线对象
     cpu = CPU(bus: cpuBus);
 
-    ppu = Ppu(
+    ppu = MyPpu(
       ppuBus: ppuBus,
-      mirroring: cartridge.mirroring,
       onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
     );
 
@@ -53,7 +53,7 @@ class Board {
         source: cpuBus,
         target: FunctionalWritable((U16 index, U8 value) {
           // 写256次2004端口
-          // ppu.regOamData = value;
+          ppu.regOamData = value;
         }),
       ),
       targetPage: 0,

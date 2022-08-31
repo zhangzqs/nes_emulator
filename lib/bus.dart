@@ -1,8 +1,6 @@
 import 'bus_adapter.dart';
 import 'common.dart';
 
-
-
 /// 可以把总线本身也看作可寻址的设备
 class Bus implements BusAdapter {
   final List<BusAdapter> devices = [];
@@ -20,7 +18,8 @@ class Bus implements BusAdapter {
   @override
   U8 read(U16 address) {
     address &= 0xffff;
-    return _findDeviceByAddress(address)?.read(address) ?? 0;
+    final value = _findDeviceByAddress(address)?.read(address) ?? 0;
+    return value & 0xFF;
   }
 
   @override
@@ -31,5 +30,5 @@ class Bus implements BusAdapter {
   }
 
   @override
-  bool accept(U16 address) => (address <= 0xFFFF);
+  bool accept(U16 address) => (address <= 0 && address <= 0xFFFF);
 }

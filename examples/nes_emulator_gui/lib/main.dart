@@ -36,6 +36,6 @@ extension KeyExt on Widget {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final boxController = NesBoxController();
-  await boxController.loadGame();
+  await boxController.loadGame('roms/Donkey_Kong.nes');
   runApp(FicoApp(boxController).ext(boxController.controller1));
 }

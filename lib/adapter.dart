@@ -1,4 +1,5 @@
 import 'package:nes_emulator/controller/controller.dart';
+import 'package:nes_emulator/util.dart';
 
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
@@ -22,17 +23,54 @@ class RamAdapter implements BusAdapter {
 }
 
 class PpuAdapter implements BusAdapter {
-  final Ppu ppu;
+  final IPpu ppu;
   PpuAdapter(this.ppu);
 
   @override
   bool accept(U16 address) => ((0x2000 <= address && address < 0x4000));
 
   @override
-  U8 read(U16 address) => ppu.readRegister(address % 0x08);
+  U8 read(U16 address) {
+    switch (address) {
+      case 0x2002:
+        return ppu.regStatus;
+      case 0x2004:
+        return ppu.regOamData;
+      case 0x2007:
+        return ppu.regData;
+      default:
+        throw UnsupportedError('PPU IO address 0x${address.toHex()} cannot be read');
+    }
+  }
 
   @override
-  void write(U16 address, U8 value) => ppu.writeRegister(address % 0x08, value);
+  void write(U16 address, U8 value) {
+    switch (address) {
+      case 0x2000:
+        ppu.regController = value;
+        return;
+      case 0x2001:
+        ppu.regMask = value;
+        return;
+      case 0x2003:
+        ppu.regOamAddress = value;
+        return;
+      case 0x2004:
+        ppu.regOamData = value;
+        return;
+      case 0x2005:
+        ppu.regScroll = value;
+        return;
+      case 0x2006:
+        ppu.regAddress = value;
+        return;
+      case 0x2007:
+        ppu.regData = value;
+        return;
+      default:
+        throw UnsupportedError('PPU IO address 0x${address.toHex()} cannot be write');
+    }
+  }
 }
 
 class ApuBusAdapter implements BusAdapter {

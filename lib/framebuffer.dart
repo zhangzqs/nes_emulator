@@ -23,6 +23,12 @@ class FrameBuffer {
     pixels[index + 2] = color & 0xff;
     pixels[index + 3] = 0xff;
   }
+
+  int getPixel(int x, int y) {
+    int index = (y * width + x) * 4;
+
+    return pixels[index] << 16 | pixels[index + 1] << 8 | pixels[index + 2];
+  }
 }
 
 // tile frame is a 16 x 16 tile frame.

@@ -5,7 +5,11 @@ class NameTableReader {
   BusAdapter adapter;
   NameTableReader(this.adapter);
 
+  /// 根据id获得名称表
   getNameTableById(int id) {
+    if (id < 0 || id > 4) {
+      throw Exception('NameTable id must be 0, 1, 2 or 3 ,not $id');
+    }
     // 0. 0x2000
     // 1. 0x2400
     // 2. 0x2800

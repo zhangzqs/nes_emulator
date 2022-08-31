@@ -45,8 +45,6 @@ abstract class ICartridge {
       'hasBatteryBacked': hasBatteryBacked,
       'hasTrainer': hasTrainer,
       'mapperId': mapperId,
-      'prgRom': prgRom.sublist(0, 10).map((e) => e.toRadixString(16)).join(', '),
-      'chrRom': chrRom.sublist(0, 10).map((e) => e.toRadixString(16)).join(', '),
     };
     return 'Cartridge{$a}';
   }
