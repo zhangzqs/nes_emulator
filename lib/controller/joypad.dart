@@ -16,8 +16,15 @@ enum JoyPadKey {
 
 class JoyPadController implements IStandardController {
   final FlagBits<JoyPadKey> _regKeyState = FlagBits(0);
-  void press(JoyPadKey key) => _regKeyState[key] = true;
-  void release(JoyPadKey key) => _regKeyState[key] = false;
+  void press(JoyPadKey key) {
+    print('press $key');
+    _regKeyState[key] = true;
+  }
+
+  void release(JoyPadKey key) {
+    print('release $key');
+    _regKeyState[key] = false;
+  }
 
   // 手柄是否处于选通状态
   bool _inStrobeState = false;
