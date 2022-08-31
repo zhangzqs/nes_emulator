@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:nes_emulator/nes.dart';
-import 'package:nes_emulator/ppu/adapter.dart';
-import 'package:nes_emulator/ppu/tile_reader.dart';
-import 'package:nes_emulator_gui/main.dart';
+import 'package:nes_emulator/framebuffer.dart';
 
-import '../nesbox_controller.dart';
 import 'frame_canvas.dart';
 
 class DebugInfoWidget extends HookWidget {
+  final TileFrame? frame1, frame2;
+
   const DebugInfoWidget({
     Key? key,
-    required this.boxController,
+    this.frame1,
+    this.frame2,
   }) : super(key: key);
-
-  final NesBoxController boxController;
-
-  Nes get nes => boxController.nes;
 
   @override
   Widget build(BuildContext context) {
@@ -31,26 +26,23 @@ class DebugInfoWidget extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: FrameCanvas(
-                      frame: TileFrameReader(PatternTablesAdapterForPpu(nes.cartridge)).createTileFrame(),
+                if (frame1 != null)
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: FrameCanvas(frame: frame1!),
                     ),
                   ),
-                ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: FrameCanvas(
-                      frame: TileFrameReader(PatternTablesAdapterForPpu(nes.cartridge)).createTileFrame(0x1000),
+                if (frame2 != null)
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: FrameCanvas(frame: frame2!),
                     ),
                   ),
-                ),
               ],
             )),
-            Text('${(nes.board.cpu.totalCycles / (1024 * 1024)) / (DateTime.now().second - startTime.second)}'),
           ],
         ));
   }

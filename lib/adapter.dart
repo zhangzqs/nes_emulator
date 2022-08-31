@@ -1,3 +1,5 @@
+import 'package:nes_emulator/controller/controller.dart';
+
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
@@ -60,15 +62,26 @@ class SoundChannelAdapter implements BusAdapter {
   }
 }
 
-class JoyPadAdapter implements BusAdapter {
+class StandardControllerAdapter implements BusAdapter {
+  IStandardController? controller1, controller2;
+  StandardControllerAdapter({
+    required this.controller1,
+    required this.controller2,
+  });
   @override
   bool accept(U16 address) => (0x4016 <= address && address < 0x4018);
 
   @override
-  U8 read(U16 address) => 0;
+  U8 read(U16 address) {
+    final controller = address == 4016 ? controller1 : controller2;
+    return controller?.keyState ?? 0;
+  }
 
   @override
-  void write(U16 address, U8 value) {}
+  void write(U16 address, U8 value) {
+    final controller = address == 4016 ? controller1 : controller2;
+    controller?.strobe = value;
+  }
 }
 
 class UnusedAdapter implements BusAdapter {

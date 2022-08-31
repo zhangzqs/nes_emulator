@@ -1,4 +1,5 @@
 import 'package:nes_emulator/bus_adapter.dart';
+import 'package:nes_emulator/controller/controller.dart';
 import 'package:nes_emulator/dma/dma.dart';
 
 import 'adapter.dart';
@@ -27,7 +28,11 @@ class Board {
   /// Palette
   final Ram palettesRam = Ram(0x20);
 
-  Board(ICartridge cartridge) {
+  Board({
+    required ICartridge cartridge,
+    IStandardController? controller1,
+    IStandardController? controller2,
+  }) {
     [
       PatternTablesAdapterForPpu(cartridge),
       NameTablesAdapterForPpu(nameTablesRam),
@@ -61,7 +66,10 @@ class Board {
       ApuBusAdapter(),
       dmaControllerAdapter,
       SoundChannelAdapter(),
-      JoyPadAdapter(),
+      StandardControllerAdapter(
+        controller1: controller1,
+        controller2: controller2,
+      ),
       UnusedAdapter(),
       CartridgeAdapterForCpu(cartridge),
     ].forEach(cpuBus.registerDevice);

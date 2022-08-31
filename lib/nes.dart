@@ -1,12 +1,20 @@
 import 'board.dart';
 import 'cartridge/cartridge.dart';
+import 'controller/controller.dart';
 import 'framebuffer.dart';
 
 class Nes {
-  Board board;
+  final Board board;
 
-  final Cartridge cartridge;
-  Nes(this.cartridge) : board = Board(cartridge);
+  Nes({
+    required ICartridge cartridge,
+    IStandardController? controller1,
+    IStandardController? controller2,
+  }) : board = Board(
+          cartridge: cartridge,
+          controller1: controller1,
+          controller2: controller2,
+        );
 
   /// 执行一个cpu时钟周期
   void clock() {
