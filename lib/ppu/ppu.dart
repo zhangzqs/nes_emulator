@@ -113,7 +113,7 @@ class MyPpu implements IPpu {
   int get frame => _frame;
 
   int get backgroundColor {
-    return nesSysPalettes[_readPalette(0) % 64]!;
+    return nesSysPalettes[_readPalette(0) % 64];
   }
 
   @override
@@ -496,7 +496,7 @@ class MyPpu implements IPpu {
       }
     }
     // https://github.com/fogleman/nes/blob/master/nes/ppu.go#L565
-    final c = nesSysPalettes[_readPalette(color) % 64]!;
+    final c = nesSysPalettes[_readPalette(color) % 64];
     _back.setPixel(x, y, c);
     // print(c);
   }
