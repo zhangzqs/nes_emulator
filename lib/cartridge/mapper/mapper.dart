@@ -1,27 +1,28 @@
+import 'package:nes_emulator/cartridge/cartridge.dart';
 import 'package:nes_emulator/common.dart';
 
-import 'mapper0.dart';
+import 'mapper2.dart';
 
 abstract class Mapper {
-  U8 prgBanks, chrBanks;
-  Mapper(this.prgBanks, this.chrBanks);
+  final ICartridge cartridge;
+  Mapper(this.cartridge);
 
-  /// 地址映射，cpu总线上的地址映射到 PRG ROM 的偏移量上
-  int cpuMapRead(U16 address);
-  int cpuMapWrite(U16 address);
+  U8 cpuMapRead(U16 address);
+  void cpuMapWrite(U16 address, U8 value);
 
-  /// 地址映射，ppu总线上的地址映射到 PRG ROM 的偏移量上
-  int ppuMapRead(U16 address);
-  int ppuMapWrite(U16 address);
+  U8 ppuMapRead(U16 address);
+  void ppuMapWrite(U16 address, U8 value);
 }
 
 class MapperFactory {
-  static Mapper getMapper(int mapperId, U8 prgBanks, U8 chrBanks) {
-    switch (mapperId) {
+  static Mapper getMapper(ICartridge cartridge) {
+    switch (cartridge.mapperId) {
       case 0:
-        return Mapper0(prgBanks, chrBanks);
+        return Mapper2(cartridge);
+      case 2:
+        return Mapper2(cartridge);
       default:
-        throw UnimplementedError('未实现Mapper $mapperId');
+        throw UnimplementedError('未实现Mapper ${cartridge.mapperId}');
     }
   }
 }

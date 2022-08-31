@@ -112,13 +112,13 @@ class StandardControllerAdapter implements BusAdapter {
   @override
   U8 read(U16 address) {
     final controller = address == 4016 ? controller1 : controller2;
-    return controller?.keyState ?? 0;
+    return controller?.regKeyState ?? 0;
   }
 
   @override
   void write(U16 address, U8 value) {
     final controller = address == 4016 ? controller1 : controller2;
-    controller?.strobe = value;
+    controller?.regStrobe = value;
   }
 }
 
@@ -147,14 +147,8 @@ class CartridgeAdapterForCpu implements BusAdapter {
   bool accept(U16 address) => (0x4020 <= address && address <= 0xFFFF);
 
   @override
-  U8 read(U16 address) {
-    final offset = cartridge.mapper.cpuMapRead(address);
-    return cartridge.prgRom[offset];
-  }
+  U8 read(U16 address) => cartridge.mapper.cpuMapRead(address);
 
   @override
-  void write(U16 address, U8 value) {
-    final offset = cartridge.mapper.cpuMapWrite(address);
-    cartridge.prgRom[offset] = value;
-  }
+  void write(U16 address, U8 value) => cartridge.mapper.cpuMapWrite(address, value);
 }

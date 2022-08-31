@@ -9,7 +9,7 @@ import 'nes_file.dart';
 abstract class ICartridge {
   Mapper? _mapper;
   Mapper get mapper {
-    return _mapper ??= MapperFactory.getMapper(mapperId, prgBanks, chrBanks);
+    return _mapper ??= MapperFactory.getMapper(this);
   }
 
   Ram? _sRam;
@@ -76,5 +76,9 @@ class Cartridge extends ICartridge {
         mapperId = reader.mapperId,
         prgBanks = reader.prgBanks,
         chrBanks = reader.chrBanks,
-        hasTrainer = reader.hasTrainer;
+        hasTrainer = reader.hasTrainer {
+    if (!reader.isValid) {
+      throw FormatException('Nes file format error');
+    }
+  }
 }

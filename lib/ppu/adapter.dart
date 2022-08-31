@@ -12,16 +12,10 @@ class PatternTablesAdapterForPpu implements BusAdapter {
   bool accept(U16 address) => address >= 0x0000 && address < 0x2000;
 
   @override
-  U8 read(U16 address) {
-    final offset = cartridge.mapper.ppuMapRead(address);
-    return cartridge.chrRom[offset];
-  }
+  U8 read(U16 address) => cartridge.mapper.ppuMapRead(address);
 
   @override
-  void write(U16 address, U8 value) {
-    final offset = cartridge.mapper.ppuMapRead(address);
-    cartridge.chrRom[offset] = value;
-  }
+  void write(U16 address, U8 value) => cartridge.mapper.ppuMapWrite(address, value);
 }
 
 /// 该部分为显存Video RAM的适配器
