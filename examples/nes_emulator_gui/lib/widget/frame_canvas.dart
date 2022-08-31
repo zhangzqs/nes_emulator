@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/framebuffer.dart';
 
 Future<ui.Image> frameToImage(FrameBuffer frame) {
@@ -33,7 +32,7 @@ class ImagePainter extends CustomPainter {
   }
 }
 
-class FrameCanvas extends HookWidget {
+class FrameCanvas extends StatelessWidget {
   const FrameCanvas({
     Key? key,
     required this.frame,
@@ -43,10 +42,12 @@ class FrameCanvas extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = useFuture(frameToImage(frame));
-
-    if (snapshot.data == null) return SizedBox();
-
-    return CustomPaint(painter: ImagePainter(snapshot.data!));
+    return FutureBuilder<ui.Image>(
+      future: frameToImage(frame),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox();
+        return CustomPaint(painter: ImagePainter(snapshot.data!));
+      },
+    );
   }
 }

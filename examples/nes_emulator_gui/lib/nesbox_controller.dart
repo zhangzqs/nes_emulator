@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/cartridge/cartridge.dart';
 import 'package:nes_emulator/cartridge/nes_file.dart';
 import 'package:nes_emulator/controller/controller.dart';
 import 'package:nes_emulator/framebuffer.dart';
 import 'package:nes_emulator/nes.dart';
+import 'package:nes_emulator/ppu/adapter.dart';
+import 'package:nes_emulator/ppu/pattern_tables_reader.dart';
 
 class NesBoxController {
   NesBoxController();
@@ -26,7 +27,9 @@ class NesBoxController {
   late ICartridge cartridge;
   late JoyPadController controller1, controller2;
 
-  loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
+  late TileFrame tileFrame1, tileFrame2;
+
+  Future<void> loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
     final ByteData gameBytes = await rootBundle.load(gamePath);
     final nesFile = NesFileReader(gameBytes.buffer.asUint8List());
     cartridge = Cartridge(nesFile);
@@ -38,27 +41,24 @@ class NesBoxController {
       controller1: controller1,
       controller2: controller2,
     );
-    _gameLoadedCompleter.complete('loaded');
+    final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge));
+    tileFrame1 = tileFrameReader.firstTileFrame;
+    tileFrame2 = tileFrameReader.secondTileFrame;
+    if (!_gameLoadedCompleter.isCompleted) _gameLoadedCompleter.complete('loaded');
     runFrameLoop();
   }
 
-  runFrameLoop() {
+  void runFrameLoop() {
     _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) async {
       _frameStreamController.sink.add(nes.stepFrame());
     });
   }
 
-  pause() {
+  void pause() {
     _frameLoopTimer?.cancel();
   }
 
-  resume() {
+  void resume() {
     runFrameLoop();
   }
-}
-
-NesBoxController useNesBoxController() {
-  final boxContorller = useState(NesBoxController());
-
-  return boxContorller.value;
 }

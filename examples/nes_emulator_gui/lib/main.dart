@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'nesbox_controller.dart';
 
-late DateTime startTime;
-
-void main() {
-  startTime = DateTime.now();
-  runApp(const FicoApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final boxController = NesBoxController();
+  await boxController.loadGame();
+  runApp(FicoApp(boxController));
 }

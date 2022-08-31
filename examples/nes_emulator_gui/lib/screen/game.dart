@@ -1,29 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/controller/controller.dart';
+import 'package:nes_emulator/framebuffer.dart';
+import 'package:nes_emulator_gui/nesbox_controller.dart';
 
-import '../nesbox_controller.dart';
+import '../widget/debug_info.dart';
 import '../widget/frame_canvas.dart';
 
-class GameScreen extends HookWidget {
+class GameScreen extends StatelessWidget {
+  final NesBoxController nesController;
+  GameScreen(this.nesController);
   @override
   Widget build(BuildContext context) {
-    final boxController = useNesBoxController();
-    final snapshot = useStream(boxController.frameStream);
-
-    useEffect(() {
-      boxController.loadGame();
-    }, []);
-
-    if (!snapshot.hasData) return const SizedBox();
-
     final view = Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(flex: 2, child: FrameCanvas(frame: snapshot.data!)),
-        // const Expanded(flex: 1, child: DebugInfoWidget()),
+        Expanded(
+            flex: 2,
+            child: StreamBuilder(
+              stream: nesController.frameStream,
+              builder: (BuildContext context, AsyncSnapshot<FrameBuffer> snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                }
+                return FrameCanvas(frame: snapshot.data!);
+              },
+            )),
+        Expanded(
+          flex: 1,
+          child: DebugInfoWidget(
+            frame1: nesController.tileFrame1,
+            frame2: nesController.tileFrame2,
+          ),
+        ),
       ],
     );
     return KeyboardListener(
@@ -45,9 +55,9 @@ class GameScreen extends HookWidget {
 
         if (key == null) return;
         if (event is KeyUpEvent) {
-          boxController.controller1.release(key);
+          nesController.controller1.release(key);
         } else if (key is KeyDownEvent) {
-          boxController.controller1.press(key);
+          nesController.controller1.press(key);
         }
       },
     );

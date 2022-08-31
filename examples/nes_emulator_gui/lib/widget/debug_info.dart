@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:nes_emulator/framebuffer.dart';
 
 import 'frame_canvas.dart';
 
-class DebugInfoWidget extends HookWidget {
+class DebugInfoWidget extends StatelessWidget {
   final TileFrame? frame1, frame2;
 
   const DebugInfoWidget({
