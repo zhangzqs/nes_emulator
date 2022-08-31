@@ -35,7 +35,7 @@ class DebugInfoWidget extends HookWidget {
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: FrameCanvas(
-                      frame: TileFrameReader(CartridgeAdapterForPpu(nes.cartridge)).createTileFrame(),
+                      frame: TileFrameReader(PatternTablesAdapterForPpu(nes.cartridge)).createTileFrame(),
                     ),
                   ),
                 ),
@@ -44,7 +44,7 @@ class DebugInfoWidget extends HookWidget {
                   child: AspectRatio(
                     aspectRatio: 1,
                     child: FrameCanvas(
-                      frame: TileFrameReader(CartridgeAdapterForPpu(nes.cartridge)).createTileFrame(0x1000),
+                      frame: TileFrameReader(PatternTablesAdapterForPpu(nes.cartridge)).createTileFrame(0x1000),
                     ),
                   ),
                 ),

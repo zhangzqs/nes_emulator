@@ -3,10 +3,9 @@ import 'package:nes_emulator/util.dart';
 import '../common.dart';
 import '../framebuffer.dart';
 import 'adapter.dart';
-import 'palettes.dart';
 
 class TileFrameReader {
-  CartridgeAdapterForPpu adapter;
+  PatternTablesAdapterForPpu adapter;
   TileFrameReader(this.adapter);
 
   late TileFrame firstTileFrame = createTileFrame();
@@ -27,10 +26,10 @@ class TileFrameReader {
           int y = (tiles / 16).floor() * 8 + fineY;
 
           final color = [
-            nesSysPalettes[0x21]!, // 00 蓝色
-            nesSysPalettes[0x05]!, // 01 红色
-            nesSysPalettes[0x28]!, // 10 黄色
-            nesSysPalettes[0x17]!, // 11 褐色
+            0xffffff, // 00 蓝色
+            0xff0000, // 01 红色
+            0x0000ff, // 10 黄色
+            0xffffff, // 11 褐色
           ][highBit << 1 | lowBit];
 
           frame.setPixel(x, y, color);
