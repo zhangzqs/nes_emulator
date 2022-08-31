@@ -116,7 +116,7 @@ class CartridgeAdapterForCpu implements BusAdapter {
 
   @override
   void write(U16 address, U8 value) {
-    final offset = cartridge.mapper.cpuMapRead(address);
+    final offset = cartridge.mapper.cpuMapWrite(address);
     cartridge.prgRom[offset] = value;
   }
 }

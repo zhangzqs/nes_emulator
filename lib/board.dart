@@ -53,7 +53,7 @@ class Board {
         source: cpuBus,
         target: FunctionalWritable((U16 index, U8 value) {
           // 写256次2004端口
-          ppu.regOamData = value;
+          // ppu.regOamData = value;
         }),
       ),
       targetPage: 0,

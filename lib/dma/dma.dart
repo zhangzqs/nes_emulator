@@ -15,5 +15,7 @@ class DmaController {
   }
 
   // 按页面传送(一页256字节)
-  void transferPage(U8 sourcePage, U8 targetPage) => transfer(sourcePage << 8, 0x100, targetPage << 8);
+  void transferPage(U8 sourcePage, U8 targetPage) {
+    transfer(sourcePage << 8, 0x100, targetPage << 8);
+  }
 }
