@@ -1,6 +1,8 @@
 import 'package:nes_emulator/bus_adapter.dart';
 import 'package:nes_emulator/controller/controller.dart';
 import 'package:nes_emulator/dma/dma.dart';
+import 'package:nes_emulator/ppu/abstruct_ppu.dart';
+import 'package:nes_emulator/ppu/ppu4.dart';
 
 import 'adapter.dart';
 import 'bus.dart';
@@ -8,7 +10,6 @@ import 'cartridge/cartridge.dart';
 import 'common.dart';
 import 'cpu/cpu.dart';
 import 'ppu/adapter.dart';
-import 'ppu/ppu2.dart';
 import 'ram/ram.dart';
 
 /// 模拟NES主板
@@ -16,7 +17,7 @@ class Board {
   final cpuBus = Bus();
   final ppuBus = Bus();
 
-  late Ppu2 ppu;
+  late IPpu ppu;
   late CPU cpu;
 
   /// nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
@@ -34,7 +35,7 @@ class Board {
     IStandardController? controller2,
   }) {
     [
-      PatternTablesAdapterForPpu(cartridge),
+      PatternTablesAdapterForPpu(cartridge.mapper),
       NameTablesAdapterForPpu(nameTablesRam, cartridge.mirroring),
       PalettesAdapterForPpu(palettesRam),
       MirrorAdapterForPpu(ppuBus),
@@ -43,7 +44,15 @@ class Board {
     // cpu作为总线的master设备需要拿到总线对象
     cpu = CPU(bus: cpuBus);
 
-    ppu = Ppu2(
+    // ppu = MyPpu(
+    //   bus: ppuBus,
+    //   onNmiInterrupt: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
+    //   mirroring: cartridge.mirroring,
+    //   ppuVideoRAM: nameTablesRam,
+    //   ppuPalettes: palettesRam,
+    //   mapper: cartridge.mapper,
+    // );
+    ppu = PPU5(
       bus: ppuBus,
       onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
     );
@@ -53,7 +62,7 @@ class Board {
         source: cpuBus,
         target: FunctionalWritable((U16 index, U8 value) {
           // 写256次2004端口
-          ppu.regOamData = value;
+          cpuBus.write(0x2004, value);
         }),
       ),
       targetPage: 0,

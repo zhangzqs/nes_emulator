@@ -13,7 +13,7 @@ class Instruction {
 }
 
 void branchSuccess(CPU cpu) {
-  cpu.totalCycles += isPageCrossed(cpu._dataAddress, cpu.regPC + 1) ? 2 : 1;
+  cpu._remainingCycles += isPageCrossed(cpu._dataAddress, cpu.regPC + 1) ? 2 : 1;
   cpu.regPC = cpu._dataAddress;
 }
 

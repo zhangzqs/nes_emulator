@@ -12,6 +12,10 @@ extension ColorMethod on Color {
   U8 getR() => (this >> 16) & 0xFF;
   U8 getG() => (this >> 8) & 0xFF;
   U8 getB() => this & 0xFF;
+
+  static Color fromRGB(U8 r, U8 g, U8 b) {
+    return r << 16 | g << 8 | b;
+  }
 }
 
 class NesPalettes {

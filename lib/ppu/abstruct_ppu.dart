@@ -1,4 +1,5 @@
 import '../common.dart';
+import '../framebuffer.dart';
 
 /// Ppu暴露给Cpu的8个寄存器io端口
 /// https://www.nesdev.org/wiki/PPU_registers
@@ -37,4 +38,7 @@ abstract class IPpu {
 
   /// 获取当前总帧数
   int get totalFrames;
+
+  /// 获取当前的FrameBuffer
+  FrameBuffer get frameBuffer;
 }

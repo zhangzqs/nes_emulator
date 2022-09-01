@@ -45,7 +45,7 @@ class NesBoxController {
       controller1: controller1,
       controller2: controller2,
     );
-    final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge));
+    final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge.mapper));
     palettesReader = PalettesReader(nes.board.ppuBus);
     tileFrame1 = tileFrameReader.firstTileFrame;
     tileFrame2 = tileFrameReader.secondTileFrame;

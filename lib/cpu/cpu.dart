@@ -44,6 +44,9 @@ class CPU {
   /// cpu运行的总周期数
   int totalCycles = 0;
 
+  /// 执行当前指令剩余的时钟周期数
+  int _remainingCycles = 0;
+
   late Op _op; // 要执行的指令
   late int _dataAddress; // 目标操作数地址
 
@@ -62,14 +65,16 @@ class CPU {
 
   CpuInterruptSignal? _interrupt;
 
-  int stall = 0;
+  /// 判断当前CPU是否处于执行周期
+  bool isRunningInstruction() => _remainingCycles != 0;
 
-  /// cpu运行一个指令
-  int runOneInstruction() {
+  /// cpu允许一个周期
+  void runOneClock() {
     // 上一条指令还没执行完毕
-    if (stall > 0) {
-      stall--;
-      return 1;
+    if (_remainingCycles > 0) {
+      _remainingCycles--;
+      totalCycles++;
+      return;
     }
     // 上一条指令执行周期结束，进入中断周期，检查是否有中断需要处理
     if (_interrupt != null) {
@@ -77,13 +82,11 @@ class CPU {
       _interrupt = null; // 清除中断信号
     }
 
-    final cycles = totalCycles;
-
     final opcode = readBus8Bit(regPC); // 读指令操作码
 
     _op = OpcodeManager.getOp(opcode); // 读指令
 
-    totalCycles += _op.cycles; // 当前指令需要执行的周期数
+    _remainingCycles = _op.cycles; // 当前指令需要执行的周期数
 
     final result = _op.mode.call(this);
 
@@ -91,11 +94,10 @@ class CPU {
     regPC += result.pcStepSize; // 更新pc
 
     // 如果指令产生跨页，那么需要额外增加一个时钟周期
-    if (result.pageCrossed && _op.increaseCycleWhenCrossPage) totalCycles++;
+    if (result.pageCrossed && _op.increaseCycleWhenCrossPage) _remainingCycles++;
 
     // 执行指令
     _op.instruction.call(this);
-    return totalCycles - cycles;
   }
 
   /// 发送中断信号
@@ -127,7 +129,7 @@ class CPU {
     // Set the interrupt disable flag to prevent further interrupts.
     regStatus.set(CpuStatusFlag.interruptDisable);
 
-    totalCycles += 7;
+    _remainingCycles = 7;
   }
 
   /// IRQ中断
@@ -142,7 +144,7 @@ class CPU {
 
     regPC = readBus16Bit(0xfffe);
 
-    totalCycles += 7;
+    _remainingCycles = 7;
   }
 
   /// RESET中断
@@ -150,7 +152,8 @@ class CPU {
     regSP = 0xfd;
     regPC = readBus16Bit(0xfffc);
     regStatus.value = 0x24;
-    totalCycles = 7;
+
+    _remainingCycles = 7;
   }
 
   /// 读取总线

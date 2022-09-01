@@ -29,21 +29,21 @@ class Nes {
   /// 执行一个cpu时钟周期
   void clock() {
     // 运行一次cpu
-    int clk = board.cpu.runOneInstruction();
-    i += clk;
+    board.cpu.runOneClock();
+    i++;
     // 执行三次ppu
-    for (int i = 0; i < 3 * clk; i++) {
+    for (int i = 0; i < 3; i++) {
       board.ppu.clock();
     }
   }
 
   FrameBuffer stepFrame() {
-    int frame = board.ppu.frame_finished;
-    while (board.ppu.frame_finished == frame) {
+    int frame = board.ppu.totalFrames;
+    while (board.ppu.totalFrames == frame) {
       // clock可能会影响frame
       clock();
     }
 
-    return board.ppu.frame_data;
+    return board.ppu.frameBuffer;
   }
 }

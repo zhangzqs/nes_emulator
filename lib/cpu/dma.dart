@@ -26,6 +26,6 @@ class DmaControllerAdapter implements BusAdapter {
     // 开始拷贝
     dmaController.transferPage(page, targetPage);
     // 写入完毕需要更新剩余周期数, 之前的总周期若为奇数则等待513周期，偶数为514
-    cpu.stall += 513 + (cpu.totalCycles % 2);
+    cpu._remainingCycles += 513 + (cpu.totalCycles % 2);
   }
 }

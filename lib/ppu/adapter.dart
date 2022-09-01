@@ -1,21 +1,21 @@
+import 'package:nes_emulator/cartridge/mapper/mapper.dart';
 import 'package:nes_emulator/ram/ram.dart';
 
 import '../bus_adapter.dart';
-import '../cartridge/cartridge.dart';
 import '../common.dart';
 
 class PatternTablesAdapterForPpu implements BusAdapter {
-  final ICartridge cartridge;
-  PatternTablesAdapterForPpu(this.cartridge);
+  final Mapper mapper;
+  PatternTablesAdapterForPpu(this.mapper);
 
   @override
   bool accept(U16 address) => address >= 0x0000 && address < 0x2000;
 
   @override
-  U8 read(U16 address) => cartridge.mapper.ppuMapRead(address);
+  U8 read(U16 address) => mapper.ppuMapRead(address);
 
   @override
-  void write(U16 address, U8 value) => cartridge.mapper.ppuMapWrite(address, value);
+  void write(U16 address, U8 value) => mapper.ppuMapWrite(address, value);
 }
 
 /// 该部分为显存Video RAM的适配器
@@ -33,12 +33,39 @@ class NameTablesAdapterForPpu implements BusAdapter {
   final Mirroring mirroring;
   NameTablesAdapterForPpu(this.ram, this.mirroring);
 
-  U16 _mirrorAddress(U16 address) {
-    final mode = mirroring.index;
-    address = (address - 0x2000) % 0x1000;
-    final table = (address / 0x0400).floor();
-    final offset = address % 0x0400;
-    return 0x2000 + _mirrorLookUp[mode][table] * 0x0400 + offset;
+  // U16 _mirrorAddress(U16 address) {
+  //   final mode = mirroring.index;
+  //   address = (address - 0x2000) % 0x1000;
+  //   final table = address ~/ 0x0400;
+  //   final offset = address % 0x0400;
+  //   return 0x2000 + _mirrorLookUp[mode][table] * 0x0400 + offset;
+  // }
+
+  int _mirrorAddress(int address) {
+    address = address % 0x1000;
+    int chunk = address ~/ 0x400;
+
+    switch (mirroring) {
+      // [A][A] --> [0x2000][0x2400]
+      // [B][B] --> [0x2800][0x2c00]
+      case Mirroring.horizontal:
+        return [1, 3].contains(chunk) ? address - 0x400 : address;
+
+      // [A][B] --> [0x2000][0x2400]
+      // [A][B] --> [0x2800][0x2c00]
+      case Mirroring.vertical:
+        return chunk > 1 ? address - 0x800 : address;
+
+      // [A][B] --> [0x2000][0x2400]
+      // [C][D] --> [0x2800][0x2c00]
+      case Mirroring.fourScreen:
+        return address;
+
+      // [A][A] --> [0x2000][0x2400]
+      // [A][A] --> [0x2800][0x2c00]
+      case Mirroring.singleScreen:
+        return address % 0x400;
+    }
   }
 
   @override
@@ -57,7 +84,7 @@ class PalettesAdapterForPpu implements BusAdapter {
   PalettesAdapterForPpu(this.ram);
 
   @override
-  bool accept(U16 address) => 0x3F00 <= address && address <= 0x4000;
+  bool accept(U16 address) => 0x3F00 <= address && address < 0x4000;
 
   @override
   U8 read(U16 address) => ram.read((address - 0x3F00) % 0x20);

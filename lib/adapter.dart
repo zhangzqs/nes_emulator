@@ -5,6 +5,7 @@ import 'package:nes_emulator/util.dart';
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
+import 'ppu/ppu4.dart';
 import 'ram/ram.dart';
 
 class RamAdapter implements BusAdapter {
@@ -20,6 +21,25 @@ class RamAdapter implements BusAdapter {
 
   @override
   void write(U16 address, U8 value) => ram.write(address % 0x800, value);
+}
+
+class Ppu5Adapter implements BusAdapter {
+  final PPU5 ppu;
+
+  Ppu5Adapter(this.ppu);
+
+  @override
+  bool accept(U16 address) => ((0x2000 <= address && address < 0x4000));
+
+  @override
+  U8 read(U16 address) {
+    return ppu.readRegister(address);
+  }
+
+  @override
+  void write(U16 address, U8 value) {
+    ppu.writeRegister(address, value);
+  }
 }
 
 class PpuAdapter implements BusAdapter {

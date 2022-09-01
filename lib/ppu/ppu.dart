@@ -15,10 +15,10 @@ class MyPpu implements IPpu {
   final VoidCallback onNmiInterrupted;
 
   /// 游戏卡带
-  final BusAdapter ppuBus;
+  final BusAdapter bus;
 
   MyPpu({
-    required this.ppuBus,
+    required this.bus,
     required this.onNmiInterrupted,
   }) {
     reset();
@@ -138,7 +138,7 @@ class MyPpu implements IPpu {
     if (address >= 16 && address % 4 == 0) {
       address -= 16;
     }
-    return ppuBus.read(0x3F00 + address);
+    return bus.read(0x3F00 + address);
   }
 
   /// 写入调色板
@@ -146,7 +146,7 @@ class MyPpu implements IPpu {
     if (address >= 16 && address % 4 == 0) {
       address -= 16;
     }
-    return ppuBus.write(0x3F00 + address, value);
+    return bus.write(0x3F00 + address, value);
   }
 
   /// control 寄存器被写入
@@ -258,14 +258,14 @@ class MyPpu implements IPpu {
 
   @override
   U8 get regData {
-    U8 value = ppuBus.read(_v);
+    U8 value = bus.read(_v);
     // emulate buffered reads
     if (_v % 0x4000 < 0x3F00) {
       final buffered = _bufferedData;
       _bufferedData = value;
       value = buffered;
     } else {
-      _bufferedData = ppuBus.read(_v - 0x1000);
+      _bufferedData = bus.read(_v - 0x1000);
     }
     // increment address
     if (flagIncrement == 0) {
@@ -279,7 +279,7 @@ class MyPpu implements IPpu {
   @override
   set regData(U8 value) {
     _register = value;
-    ppuBus.write(_v, value);
+    bus.write(_v, value);
     // increment address
     if (flagIncrement == 0) {
       _v += 1;
@@ -370,14 +370,14 @@ class MyPpu implements IPpu {
   void fetchNameTableByte() {
     final v = _v;
     final address = 0x2000 | (v & 0x0FFF);
-    _nameTableByte = ppuBus.read(address);
+    _nameTableByte = bus.read(address);
   }
 
   void fetchAttributeTableByte() {
     final v = _v;
     final address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
     final shift = ((v >> 4) & 4) | (v & 2);
-    _attributeTableByte = ((ppuBus.read(address) >> shift) & 3) << 2;
+    _attributeTableByte = ((bus.read(address) >> shift) & 3) << 2;
   }
 
   void fetchLowTileByte() {
@@ -385,7 +385,7 @@ class MyPpu implements IPpu {
     final table = flagBackgroundTable;
     final tile = _nameTableByte;
     final address = 0x1000 * table + tile * 16 + fineY;
-    _lowTileByte = ppuBus.read(address);
+    _lowTileByte = bus.read(address);
   }
 
   fetchHighTileByte() {
@@ -394,7 +394,7 @@ class MyPpu implements IPpu {
 
     final tile = _nameTableByte;
     final address = 0x1000 * table + tile * 16 + fineY;
-    _highTileByte = ppuBus.read(address);
+    _highTileByte = bus.read(address);
   }
 
   void storeTileData() {
@@ -507,8 +507,8 @@ class MyPpu implements IPpu {
       address = 0x1000 * table + tile * 16 + row;
     }
     final a = (attributes & 3) << 2;
-    U8 lowTileByte = ppuBus.read(address);
-    U8 highTileByte = ppuBus.read(address + 8);
+    U8 lowTileByte = bus.read(address);
+    U8 highTileByte = bus.read(address + 8);
     int data = 0;
     for (int i = 0; i < 8; i++) {
       U8 p1 = 0, p2 = 0;
@@ -668,4 +668,7 @@ class MyPpu implements IPpu {
       flagSpriteOverflow = 0;
     }
   }
+
+  @override
+  FrameBuffer get frameBuffer => _front;
 }

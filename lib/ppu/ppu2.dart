@@ -544,4 +544,7 @@ class Ppu2 implements IPpu {
   int frame_finished = -1;
 
   FrameBuffer frame_data = FrameBuffer(width: 256, height: 240);
+
+  @override
+  FrameBuffer get frameBuffer => frame_data;
 }
