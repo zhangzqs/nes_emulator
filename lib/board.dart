@@ -2,7 +2,6 @@ import 'package:nes_emulator/bus_adapter.dart';
 import 'package:nes_emulator/controller/controller.dart';
 import 'package:nes_emulator/dma/dma.dart';
 import 'package:nes_emulator/ppu/abstruct_ppu.dart';
-import 'package:nes_emulator/ppu/ppu4.dart';
 
 import 'adapter.dart';
 import 'bus.dart';
@@ -10,6 +9,7 @@ import 'cartridge/cartridge.dart';
 import 'common.dart';
 import 'cpu/cpu.dart';
 import 'ppu/adapter.dart';
+import 'ppu/ppu.dart';
 import 'ram/ram.dart';
 
 /// 模拟NES主板
@@ -52,7 +52,7 @@ class Board {
     //   ppuPalettes: palettesRam,
     //   mapper: cartridge.mapper,
     // );
-    ppu = PPU5(
+    ppu = Ppu(
       bus: ppuBus,
       onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
     );
