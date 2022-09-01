@@ -103,7 +103,9 @@ void main() {
       expect(cpu.regStatus.value, log.regPS);
       expect(cpu.regSP, log.regSP);
       expect(cpu.totalCycles, log.cpuCycles, reason: "cpu cycles not expected at line: ${index + 1}");
-      cpu.runOneInstruction();
+      do {
+        cpu.runOneClock();
+      } while (cpu.isRunningInstruction());
     }
   });
 }
