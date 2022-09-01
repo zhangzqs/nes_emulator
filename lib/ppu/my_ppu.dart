@@ -26,9 +26,7 @@ class MyPpu implements IPpu {
 
   final _oam = Ram(256);
   FrameBuffer _front = FrameBuffer(width: 256, height: 240);
-  FrameBuffer get front => _front;
   FrameBuffer _back = FrameBuffer(width: 256, height: 240);
-  FrameBuffer get back => _back;
 
   int _cycle = 340;
   int get cycle => _cycle;
@@ -214,6 +212,7 @@ class MyPpu implements IPpu {
     _register = oamData;
     _oam[_oamAddress] = oamData;
     _oamAddress++;
+    _oamAddress &= 0xFF;
   }
 
   @override
@@ -384,7 +383,7 @@ class MyPpu implements IPpu {
     final fineY = (_v >> 12) & 7;
     final table = flagBackgroundTable;
     final tile = _nameTableByte;
-    final address = 0x1000 * table + tile * 16 + fineY;
+    final address = 0x1000 * (table & 0xFFFF) + (tile & 0xFFFF) * 16 + fineY;
     _lowTileByte = bus.read(address);
   }
 
@@ -393,7 +392,7 @@ class MyPpu implements IPpu {
     final table = flagBackgroundTable;
 
     final tile = _nameTableByte;
-    final address = 0x1000 * table + tile * 16 + fineY;
+    final address = 0x1000 * (table & 0xFFFF) + (tile & 0xFFFF) * 16 + fineY;
     _highTileByte = bus.read(address);
   }
 
@@ -406,13 +405,13 @@ class MyPpu implements IPpu {
       _lowTileByte <<= 1;
       _highTileByte <<= 1;
       data <<= 4;
-      data |= (a | p1 | p2);
+      data |= (a | p1 | p2) & 0xFFFFFFFF;
     }
     _tileData |= data;
   }
 
   int fetchTileData() {
-    return _tileData >> 32;
+    return (_tileData >> 32) & 0xFFFFFFFF;
   }
 
   U8 backgroundPixel() {
@@ -478,7 +477,7 @@ class MyPpu implements IPpu {
       }
     }
     // https://github.com/fogleman/nes/blob/master/nes/ppu.go#L565
-    final c = nesSysPalettes[_readPalette(color) % 64];
+    final c = nesSysPalettes[_readPalette(color)];
     _back.setPixel(x, y, c);
     // print(c);
   }
@@ -670,5 +669,5 @@ class MyPpu implements IPpu {
   }
 
   @override
-  FrameBuffer get frameBuffer => _front;
+  FrameBuffer get frameBuffer => _back;
 }

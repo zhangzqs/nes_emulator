@@ -23,4 +23,12 @@ void main() {
     expect(bs.toString(), '0100000000');
     expect(bs.subset(7, 10).toInt(), 2);
   });
+
+  test('no name', () {
+    int a = 0xFEFFFFFFFFFFFFFF;
+    for (int i = 0; i < 8; i++) {
+      print((a & 0xff));
+      a >>= 8;
+    }
+  });
 }

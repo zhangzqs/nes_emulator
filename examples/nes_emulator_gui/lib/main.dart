@@ -38,6 +38,8 @@ Future<void> main() async {
   final boxController = NesBoxController();
   await boxController.loadGame('roms/Super_mario_brothers.nes');
   // await boxController.loadGame('roms/nestest.nes');
+  // await boxController.loadGame('roms/color_test.nes');
+  // await boxController.loadGame('roms/palette.nes');
   // await boxController.loadGame('roms/hdl.nes');
   runApp(FicoApp(boxController).ext(boxController.controller1));
 }

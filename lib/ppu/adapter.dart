@@ -112,10 +112,10 @@ class PalettesAdapterForPpu implements BusAdapter {
   bool accept(U16 address) => 0x3F00 <= address && address < 0x4000;
 
   @override
-  U8 read(U16 address) => _readPalette(address % 0x20);
+  U8 read(U16 address) => _readPalette((address - 0x3F00) % 0x20);
 
   @override
-  void write(U16 address, U8 value) => _writePalette(address % 0x20, value);
+  void write(U16 address, U8 value) => _writePalette((address - 0x3F00) % 0x20, value);
 }
 
 /// 最后的镜像适配器

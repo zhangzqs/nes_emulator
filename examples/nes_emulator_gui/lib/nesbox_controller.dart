@@ -54,7 +54,7 @@ class NesBoxController {
   }
 
   void runFrameLoop() {
-    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) async {
+    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) async {
       _frameStreamController.sink.add(nes.stepFrame());
       _paletteStreamController.sink.add(palettesReader.create());
     });
