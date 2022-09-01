@@ -1,4 +1,5 @@
 import 'package:nes_emulator/bus_adapter.dart';
+import 'package:nes_emulator/ppu/palettes.dart';
 import 'package:nes_emulator/util.dart';
 
 import '../common.dart';
@@ -47,6 +48,27 @@ class PatternTablesReader {
 
           frame.setPixel(x, y, color);
         }
+      }
+    }
+    return frame;
+  }
+}
+
+class PalettesReader {
+  BusAdapter adapter;
+  PalettesReader(this.adapter);
+
+  FrameBuffer create() {
+    FrameBuffer frame = FrameBuffer(width: 16, height: 2);
+    int baseAddress = 0x3F00;
+    for (int row = 0; row < 2; row++) {
+      // 8行
+      for (int col = 0; col < 16; col++) {
+        // 4列
+        int colorIdAddress = row * 16 + col;
+        int colorId = adapter.read(baseAddress + colorIdAddress);
+        Color color = nesSysPalettes[colorId];
+        frame.setPixel(col, row, color);
       }
     }
     return frame;

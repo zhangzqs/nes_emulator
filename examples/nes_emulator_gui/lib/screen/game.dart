@@ -30,6 +30,15 @@ class GameScreen extends StatelessWidget {
           child: DebugInfoWidget(
             frame1: nesController.tileFrame1,
             frame2: nesController.tileFrame2,
+            palettesView: StreamBuilder(
+              stream: nesController.paletteStream,
+              builder: (BuildContext context, AsyncSnapshot<FrameBuffer> snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                }
+                return FrameCanvas(frame: snapshot.data!);
+              },
+            ),
           ),
         ),
       ],
