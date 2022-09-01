@@ -24,10 +24,14 @@ class NesBoxController {
 
   Stream<FrameBuffer> get frameStream => _frameStreamController.stream;
 
+  final _paletteStreamController = StreamController<FrameBuffer>.broadcast();
+  Stream<FrameBuffer> get paletteStream => _paletteStreamController.stream;
+
   late ICartridge cartridge;
   late JoyPadController controller1, controller2;
 
-  late TileFrame tileFrame1, tileFrame2;
+  late TileFrame tileFrame1, tileFrame2, palettes;
+  late PalettesReader palettesReader;
 
   Future<void> loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
     final ByteData gameBytes = await rootBundle.load(gamePath);
@@ -42,6 +46,7 @@ class NesBoxController {
       controller2: controller2,
     );
     final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge));
+    palettesReader = PalettesReader(nes.board.ppuBus);
     tileFrame1 = tileFrameReader.firstTileFrame;
     tileFrame2 = tileFrameReader.secondTileFrame;
     if (!_gameLoadedCompleter.isCompleted) _gameLoadedCompleter.complete('loaded');
@@ -51,6 +56,7 @@ class NesBoxController {
   void runFrameLoop() {
     _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 10), (timer) async {
       _frameStreamController.sink.add(nes.stepFrame());
+      _paletteStreamController.sink.add(palettesReader.create());
     });
   }
 

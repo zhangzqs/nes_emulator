@@ -30,9 +30,9 @@ class Nes {
   void clock() {
     i++;
     // 运行一次cpu
-    board.cpu.runOneClock();
+    int clk = board.cpu.runOneInstruction();
     // 执行三次ppu
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3 * clk; i++) {
       board.ppu.clock();
     }
   }

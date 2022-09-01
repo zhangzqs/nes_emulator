@@ -8,7 +8,6 @@ import 'package:nes_emulator/ram/ram.dart';
 import '../bus_adapter.dart';
 import '../common.dart';
 import '../framebuffer.dart';
-import '../util.dart';
 
 /// Ppu暴露给Cpu的8个寄存器io端口
 /// https://www.nesdev.org/wiki/PPU_registers
@@ -49,39 +48,6 @@ abstract class IPpu {
   int get frame;
 }
 
-enum MaskFlag {
-  isGreyScale, // 0: normal color, 1: produce a greyscale display
-  showLeftBackground, // 1: Show background in leftmost 8 pixels of screen, 0: Hide
-  showLeftSprites, // 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-  showBackground, // 1: Show background
-  showSprite, // 1: Show sprites
-  emphasiseRed, // red on PAL/Dendy
-  emphasiseGreen, // green on PAL/Dendy
-  emphasiseBlue, // blue on PAL/Dendy
-}
-
-enum StatusFlag {
-  unused_1,
-  unused_2,
-  unused_3,
-  unused_4,
-  unused_5,
-  spriteOverflow,
-  spriteZeroHit,
-  verticalBlankStarted,
-}
-
-enum ControlFlag {
-  nameTable1, // 0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00
-  nameTable2,
-  videoRamAddressIncrement, // 0: add 1, going across; 1: add 32, going down
-  spritePatternAddress, // 0: $0000; 1: $1000; ignored in 8x16 mode
-  backgroundPatternAddress, // 0: $0000; 1: $1000
-  spriteSize, // 0: 8x8 pixels; 1: 8x16 pixels
-  masterSlaveSelect, // 0: read backdrop from EXT pins; 1: output color on EXT pins
-  generateVBlankNmi, // 1bit, 0: 0ff, 1: on
-}
-
 class MyPpu implements IPpu {
   /// nmi中断信号
   final VoidCallback onNmiInterrupted;
@@ -112,9 +78,79 @@ class MyPpu implements IPpu {
   @override
   int get frame => _frame;
 
-  int get backgroundColor {
-    return nesSysPalettes[_readPalette(0) % 64];
+  /// PPU registers
+  U8 _x = 0; // fine x scroll (3 bit)
+  U8 _w = 0; // write toggle (1 bit)
+  U8 _f = 0; // even/odd frame flag (1 bit)
+  U16 _v = 0; // current vram address (15 bit)
+  U16 _t = 0; // temporary vram address (15 bit)
+
+  /// cpu write
+  U8 _register = 0;
+
+  /// NMI flags
+  bool _nmiOccurred = false;
+  bool _nmiPrevious = false;
+  U8 _nmiDelay = 0;
+
+  /// background temporary variables
+  U8 _nameTableByte = 0;
+  U8 _attributeTableByte = 0;
+  U8 _lowTileByte = 0;
+  U8 _highTileByte = 0;
+  int _tileData = 0;
+
+  void normalize() {
+    _x &= 0xFF;
+    _w &= 0xFF;
+    _f &= 0xFF;
+    _v &= 0xFFFF;
+    _t &= 0xFFFF;
+    _register &= 0xFF;
+    _nmiDelay &= 0xFF;
+    _nameTableByte &= 0xFF;
+    _attributeTableByte &= 0xFF;
+    _lowTileByte &= 0xFF;
+    _highTileByte &= 0xFF;
   }
+
+  /// sprite temporary variables
+  int _spriteCount = 0;
+  final Uint32List _spritePatterns = Uint32List(8);
+  final Uint8List _spritePositions = Uint8List(8);
+  final Uint8List _spritePriorities = Uint8List(8);
+  final Uint8List _spriteIndexes = Uint8List(8);
+
+  /// $2000 PPUCTRL
+  // $2000 PPUCTRL
+  U8 flagNameTable = 0; // 0: $2000; 1: $2400; 2: $2800; 3: $2C00
+  U8 flagIncrement = 0; // 0: add 1; 1: add 32
+  U8 flagSpriteTable = 0; // 0: $0000; 1: $1000; ignored in 8x16 mode
+  U8 flagBackgroundTable = 0; // 0: $0000; 1: $1000
+  U8 flagSpriteSize = 0; // 0: 8x8; 1: 8x16
+  U8 flagMasterSlave = 0; // 0: read EXT; 1: write EXT
+  bool nmiOutput = false;
+  // $2001 PPUMASK
+  U8 flagGrayscale = 0; // 0: color; 1: grayscale
+  U8 flagShowLeftBackground = 0; // 0: hide; 1: show
+  U8 flagShowLeftSprites = 0; // 0: hide; 1: show
+  U8 flagShowBackground = 0; // 0: hide; 1: show
+  U8 flagShowSprites = 0; // 0: hide; 1: show
+  U8 flagRedTint = 0; // 0: normal; 1: emphasized
+  U8 flagGreenTint = 0; // 0: normal; 1: emphasized
+  U8 flagBlueTint = 0; // 0: normal; 1: emphasized
+
+  // $2002 PPUSTATUS
+  U8 flagSpriteZeroHit = 0;
+  U8 flagSpriteOverflow = 0;
+
+  /// $2003 OAMADDR
+  int _oamAddress = 0;
+
+  /// $2007 PPUDATA
+  U8 _bufferedData = 0;
+
+  int get backgroundColor => nesSysPalettes[_readPalette(0) % 64];
 
   @override
   void reset() {
@@ -151,50 +187,41 @@ class MyPpu implements IPpu {
     return ppuBus.write(0x3F00 + address, value);
   }
 
-  final FlagBits<ControlFlag> _regControllerFlags = FlagBits(0);
-
-  /// fine x scroll (3 bit)
-  U8 _x = 0;
-
-  /// write toggle (1 bit)
-  U8 _w = 0;
-
-  /// even/odd frame flag (1 bit)
-  U8 _f = 0;
-
-  /// current vram address (15 bit)
-  U16 _v = 0;
-
-  /// temporary vram address (15 bit)
-  U16 _t = 0;
-
-  U8 _register = 0;
-
   /// control 寄存器被写入
   @override
-  set regController(U8 val) {
+  set regController(U8 value) {
     // https://github.com/fogleman/nes/blob/master/nes/ppu.go#L243
-    _register = val;
-    _regControllerFlags.value = val;
+    _register = value;
+    flagNameTable = (value >> 0) & 3;
+    flagIncrement = (value >> 2) & 1;
+    flagSpriteTable = (value >> 3) & 1;
+    flagBackgroundTable = (value >> 4) & 1;
+    flagSpriteSize = (value >> 5) & 1;
+    flagMasterSlave = (value >> 6) & 1;
+    nmiOutput = (value >> 7) & 1 == 1;
     nmiChange();
     // t: ....BA.. ........ = d: ......BA
-    _t = (_t & 0xF3FF) | ((val & 0x03) << 10);
+    _t = (_t & 0xF3FF) | ((value & 0x03) << 10);
   }
 
-  final FlagBits<MaskFlag> _regMaskFlags = FlagBits(0);
   @override
-  set regMask(U8 val) {
-    _register = val;
-    _regMaskFlags.value = val;
+  set regMask(U8 value) {
+    _register = value;
+    flagGrayscale = (value >> 0) & 1;
+    flagShowLeftBackground = (value >> 1) & 1;
+    flagShowLeftSprites = (value >> 2) & 1;
+    flagShowBackground = (value >> 3) & 1;
+    flagShowSprites = (value >> 4) & 1;
+    flagRedTint = (value >> 5) & 1;
+    flagGreenTint = (value >> 6) & 1;
+    flagBlueTint = (value >> 7) & 1;
   }
 
-  final FlagBits<StatusFlag> _regStatusFlags = FlagBits(0);
   @override
   U8 get regStatus {
-    U8 result = _register & 0x1F;
-    result |= _regStatusFlags[StatusFlag.spriteOverflow].asInt() << 5;
-    result |= _regStatusFlags[StatusFlag.spriteZeroHit].asInt() << 6;
-
+    var result = _register & 0x1F;
+    result |= flagSpriteOverflow << 5;
+    result |= flagSpriteZeroHit << 6;
     if (_nmiOccurred) {
       result |= 1 << 7;
     }
@@ -205,8 +232,6 @@ class MyPpu implements IPpu {
     return result;
   }
 
-  int _oamAddress = 0;
-
   @override
   set regOamAddress(U8 val) {
     _register = val;
@@ -215,7 +240,11 @@ class MyPpu implements IPpu {
 
   @override
   U8 get regOamData {
-    return _oam[_oamAddress];
+    var data = _oam[_oamAddress];
+    if ((_oamAddress & 0x03) == 0x02) {
+      data = data & 0xE3;
+    }
+    return data;
   }
 
   @override
@@ -265,8 +294,6 @@ class MyPpu implements IPpu {
     }
   }
 
-  U8 _bufferedData = 0;
-
   @override
   U8 get regData {
     U8 value = ppuBus.read(_v);
@@ -279,7 +306,11 @@ class MyPpu implements IPpu {
       _bufferedData = ppuBus.read(_v - 0x1000);
     }
     // increment address
-    _v += (_regControllerFlags[ControlFlag.videoRamAddressIncrement] ? 32 : 1);
+    if (flagIncrement == 0) {
+      _v += 1;
+    } else {
+      _v += 32;
+    }
     return value;
   }
 
@@ -288,7 +319,11 @@ class MyPpu implements IPpu {
     _register = value;
     ppuBus.write(_v, value);
     // increment address
-    _v += (_regControllerFlags[ControlFlag.videoRamAddressIncrement] ? 32 : 1);
+    if (flagIncrement == 0) {
+      _v += 1;
+    } else {
+      _v += 32;
+    }
   }
 
   // NTSC Timing Helper Functions
@@ -346,12 +381,8 @@ class MyPpu implements IPpu {
     _v = (_v & 0x841F) | (_t & 0x7BE0);
   }
 
-  bool _nmiOccurred = false;
-  bool _nmiPrevious = false;
-  U8 _nmiDelay = 0;
-
   void nmiChange() {
-    final nmi = _regControllerFlags[ControlFlag.generateVBlankNmi] && _nmiOccurred;
+    final nmi = nmiOutput && _nmiOccurred;
     if (nmi && !_nmiPrevious) {
       // TODO: this fixes some games but the delay shouldn't have to be so
       // long, so the timings are off somewhere
@@ -374,14 +405,12 @@ class MyPpu implements IPpu {
     nmiChange();
   }
 
-  U8 _nameTableByte = 0;
   void fetchNameTableByte() {
     final v = _v;
     final address = 0x2000 | (v & 0x0FFF);
     _nameTableByte = ppuBus.read(address);
   }
 
-  U8 _attributeTableByte = 0;
   void fetchAttributeTableByte() {
     final v = _v;
     final address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
@@ -389,26 +418,23 @@ class MyPpu implements IPpu {
     _attributeTableByte = ((ppuBus.read(address) >> shift) & 3) << 2;
   }
 
-  U8 _lowTileByte = 0;
   void fetchLowTileByte() {
     final fineY = (_v >> 12) & 7;
-    final backgroundPatternAddress = _regControllerFlags[ControlFlag.backgroundPatternAddress];
+    final table = flagBackgroundTable;
     final tile = _nameTableByte;
-    final address = 0x1000 * backgroundPatternAddress.asInt() + tile * 16 + fineY;
+    final address = 0x1000 * table + tile * 16 + fineY;
     _lowTileByte = ppuBus.read(address);
   }
 
-  U8 _highTileByte = 0;
   fetchHighTileByte() {
     final fineY = (_v >> 12) & 7;
-    final backgroundPatternAddress = _regControllerFlags[ControlFlag.backgroundPatternAddress];
+    final table = flagBackgroundTable;
 
     final tile = _nameTableByte;
-    final address = 0x1000 * backgroundPatternAddress.asInt() + tile * 16 + fineY;
+    final address = 0x1000 * table + tile * 16 + fineY;
     _highTileByte = ppuBus.read(address);
   }
 
-  int _tileData = 0;
   void storeTileData() {
     int data = 0;
     for (int i = 0; i < 8; i++) {
@@ -428,31 +454,25 @@ class MyPpu implements IPpu {
   }
 
   U8 backgroundPixel() {
-    if (!_regMaskFlags[MaskFlag.showBackground]) {
+    if (flagShowBackground == 0) {
       return 0;
     }
     final data = fetchTileData() >> ((7 - _x) * 4);
     return data & 0x0F;
   }
 
-  int spriteCount = 0;
-  Uint32List spritePatterns = Uint32List(8);
-  Uint32List spritePositions = Uint32List(8);
-  Uint32List spritePriorities = Uint32List(8);
-  Uint32List spriteIndexes = Uint32List(8);
-
   List<U8> spritePixel() {
-    if (!_regMaskFlags[MaskFlag.showSprite]) {
+    if (flagShowSprites == 0) {
       return [0, 0];
     }
 
-    for (int i = 0; i < spriteCount; i++) {
-      int offset = (_cycle - 1) - spritePositions[i];
+    for (int i = 0; i < _spriteCount; i++) {
+      int offset = (_cycle - 1) - _spritePositions[i];
       if (offset < 0 || offset > 7) {
         continue;
       }
       offset = 7 - offset;
-      final color = (spritePatterns[i] >> offset * 4) & 0x0F;
+      final color = (_spritePatterns[i] >> offset * 4) & 0x0F;
       if (color % 4 == 0) {
         continue;
       }
@@ -470,10 +490,10 @@ class MyPpu implements IPpu {
     final i = sp[0];
     U8 sprite = sp[1];
 
-    if (x < 8 && !_regMaskFlags[MaskFlag.showLeftBackground]) {
+    if (x < 8 && flagShowLeftBackground == 0) {
       background = 0;
     }
-    if (x < 8 && !_regMaskFlags[MaskFlag.showLeftSprites]) {
+    if (x < 8 && flagShowLeftSprites == 0) {
       sprite = 0;
     }
     final b = background % 4 != 0;
@@ -486,10 +506,10 @@ class MyPpu implements IPpu {
     } else if (b && !s) {
       color = background;
     } else {
-      if (spriteIndexes[i] == 0 && x < 255) {
-        _regStatusFlags[StatusFlag.spriteZeroHit] = true;
+      if (_spriteIndexes[i] == 0 && x < 255) {
+        flagSpriteZeroHit = 1;
       }
-      if (spritePriorities[i] == 0) {
+      if (_spritePriorities[i] == 0) {
         color = sprite | 0x10;
       } else {
         color = background;
@@ -506,11 +526,11 @@ class MyPpu implements IPpu {
     U8 attributes = _oam[i * 4 + 2];
     U16 address = 0;
 
-    if (!_regControllerFlags[ControlFlag.spriteSize]) {
+    if (flagSpriteSize == 0) {
       if (attributes & 0x80 == 0x80) {
         row = 7 - row;
       }
-      final table = _regControllerFlags[ControlFlag.spritePatternAddress].asInt();
+      final table = flagSpriteTable;
       address = 0x1000 * table + tile * 16 + row;
     } else {
       if (attributes & 0x80 == 0x80) {
@@ -548,8 +568,12 @@ class MyPpu implements IPpu {
   }
 
   void evaluateSprites() {
-    int h = _regControllerFlags[ControlFlag.spriteSize] ? 16 : 8;
-
+    int h = 0;
+    if (flagSpriteSize == 0) {
+      h = 8;
+    } else {
+      h = 16;
+    }
     int count = 0;
     for (int i = 0; i < 64; i++) {
       final y = _oam[i * 4 + 0];
@@ -560,29 +584,30 @@ class MyPpu implements IPpu {
         continue;
       }
       if (count < 8) {
-        spritePatterns[count] = fetchSpritePattern(i, row);
-        spritePositions[count] = x;
-        spritePriorities[count] = (a >> 5) & 1;
-        spriteIndexes[count] = i;
+        _spritePatterns[count] = fetchSpritePattern(i, row);
+        _spritePositions[count] = x;
+        _spritePriorities[count] = (a >> 5) & 1;
+        _spriteIndexes[count] = i;
       }
       count++;
     }
     if (count > 8) {
       count = 8;
-      _regStatusFlags[StatusFlag.spriteOverflow] = true;
+      flagSpriteOverflow = 1;
     }
-    spriteCount = count;
+    _spriteCount = count;
   }
 
   void tick() {
+    normalize();
     if (_nmiDelay > 0) {
       _nmiDelay--;
-      if (_nmiDelay == 0 && _regControllerFlags[ControlFlag.generateVBlankNmi] && _nmiOccurred) {
+      if (_nmiDelay == 0 && nmiOutput && _nmiOccurred) {
         onNmiInterrupted();
       }
     }
 
-    if (_regMaskFlags[MaskFlag.showBackground] || _regMaskFlags[MaskFlag.showSprite]) {
+    if (flagShowBackground != 0 || flagShowSprites != 0) {
       if (_f == 1 && _scanLine == 261 && cycle == 339) {
         _cycle = 0;
         _scanLine = 0;
@@ -607,7 +632,7 @@ class MyPpu implements IPpu {
   void clock() {
     tick();
 
-    final renderingEnabled = _regMaskFlags[MaskFlag.showBackground] || _regMaskFlags[MaskFlag.showSprite];
+    final renderingEnabled = flagShowBackground != 0 || flagShowSprites != 0;
     final preLine = _scanLine == 261;
     final visibleLine = _scanLine < 240;
     final postLine = _scanLine == 240;
@@ -666,7 +691,7 @@ class MyPpu implements IPpu {
         if (visibleLine) {
           evaluateSprites();
         } else {
-          spriteCount = 0;
+          _spriteCount = 0;
         }
       }
     }
@@ -677,8 +702,8 @@ class MyPpu implements IPpu {
     }
     if (preLine && _cycle == 1) {
       clearVerticalBlank();
-      _regStatusFlags[StatusFlag.spriteZeroHit] = false;
-      _regStatusFlags[StatusFlag.spriteOverflow] = false;
+      flagSpriteZeroHit = 0;
+      flagSpriteOverflow = 0;
     }
   }
 }
