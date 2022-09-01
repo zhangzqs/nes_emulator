@@ -36,10 +36,11 @@ extension KeyExt on Widget {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final boxController = NesBoxController();
-  await boxController.loadGame('roms/Super_mario_brothers.nes');
+  // await boxController.loadGame('roms/Super_mario_brothers.nes');
   // await boxController.loadGame('roms/nestest.nes');
   // await boxController.loadGame('roms/color_test.nes');
   // await boxController.loadGame('roms/palette.nes');
   // await boxController.loadGame('roms/hdl.nes');
+  await boxController.loadGame('roms/Donkey_Kong.nes');
   runApp(FicoApp(boxController).ext(boxController.controller1));
 }
