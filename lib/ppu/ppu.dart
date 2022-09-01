@@ -239,7 +239,7 @@ class Ppu implements IPpu {
   // this is the port that CPU read/write data via VRAM.
   @override
   int get regData {
-    int vramData = read(regV);
+    int vramData = readPpuBus(regV);
     int value;
 
     if (regV % 0x4000 < 0x3f00) {
@@ -248,7 +248,7 @@ class Ppu implements IPpu {
     } else {
       // when reading palttes, the buffer data is the mirrored nametable data that would appear "underneath" the palette.
       value = vramData;
-      dataBuffer = read(regV - 0x1000);
+      dataBuffer = readPpuBus(regV - 0x1000);
     }
 
     regV += fAddressIncrement == 1 ? 32 : 1;
@@ -257,7 +257,7 @@ class Ppu implements IPpu {
 
   @override
   set regData(int value) {
-    write(regV, value);
+    writePpuBus(regV, value);
     regV += fAddressIncrement == 1 ? 32 : 1;
   }
 
@@ -330,27 +330,27 @@ class Ppu implements IPpu {
 
   void _fetchNameTableByte() {
     int addr = 0x2000 | (regV & 0x0fff);
-    nameTableByte = read(addr);
+    nameTableByte = readPpuBus(addr);
   }
 
   void _fetchAttributeTableByte() {
     int addr = 0x23c0 | (regV & 0x0c00) | ((regV >> 4) & 0x38) | ((regV >> 2) & 0x07);
     int shift = ((regV >> 4) & 4) | (regV & 2);
-    attributeTableByte = ((read(addr) >> shift) & 3) << 2;
+    attributeTableByte = ((readPpuBus(addr) >> shift) & 3) << 2;
   }
 
   void _fetchLowBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
     int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
 
-    lowBGTileByte = read(addr);
+    lowBGTileByte = readPpuBus(addr);
   }
 
   void _fetchHighBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
     int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
 
-    highBGTileByte = read(addr + 8);
+    highBGTileByte = readPpuBus(addr + 8);
   }
 
   void _composeBGTile() {
@@ -527,13 +527,9 @@ class Ppu implements IPpu {
     dataBuffer = 0x00;
   }
 
-  int read(int address) {
-    return bus.read(address);
-  }
+  int readPpuBus(int address) => bus.read(address);
 
-  void write(int address, int value) {
-    bus.write(address, value);
-  }
+  void writePpuBus(int address, int value) => bus.write(address, value);
 
   @override
   FrameBuffer get frameBuffer => frame;
