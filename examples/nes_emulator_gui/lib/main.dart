@@ -18,8 +18,8 @@ extension KeyExt on Widget {
           LogicalKeyboardKey.keyD: JoyPadKey.right,
           LogicalKeyboardKey.keyG: JoyPadKey.select,
           LogicalKeyboardKey.keyH: JoyPadKey.start,
-          LogicalKeyboardKey.keyJ: JoyPadKey.a,
-          LogicalKeyboardKey.keyK: JoyPadKey.b,
+          LogicalKeyboardKey.keyJ: JoyPadKey.b,
+          LogicalKeyboardKey.keyK: JoyPadKey.a,
         }[event.logicalKey];
 
         if (key == null) return;
@@ -36,6 +36,8 @@ extension KeyExt on Widget {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final boxController = NesBoxController();
-  await boxController.loadGame('roms/Donkey_Kong.nes');
+  // await boxController.loadGame('roms/Super_mario_brothers.nes');
+  // await boxController.loadGame('roms/nestest.nes');
+  await boxController.loadGame('roms/hdl.nes');
   runApp(FicoApp(boxController).ext(boxController.controller1));
 }
