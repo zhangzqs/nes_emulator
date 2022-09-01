@@ -1,8 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:nes_emulator/util.dart';
-
 import '../common.dart';
+import '../util.dart';
 
 class NesFileReader {
   static const U16 _prgBankSize = 0x4000;

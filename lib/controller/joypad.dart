@@ -1,6 +1,5 @@
-import 'package:nes_emulator/util.dart';
-
 import '../common.dart';
+import '../util.dart';
 import 'controller.dart';
 
 enum JoyPadKey {

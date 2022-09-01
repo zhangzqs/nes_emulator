@@ -1,9 +1,8 @@
-import 'package:nes_emulator/controller/controller.dart';
-import 'package:nes_emulator/ppu/abstruct_ppu.dart';
-
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
+import 'controller/controller.dart';
+import 'ppu/abstruct_ppu.dart';
 import 'ram/ram.dart';
 import 'util.dart';
 

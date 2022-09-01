@@ -1,15 +1,14 @@
-import 'package:nes_emulator/bus_adapter.dart';
-import 'package:nes_emulator/controller/controller.dart';
-import 'package:nes_emulator/dma/dma.dart';
-import 'package:nes_emulator/ppu/abstruct_ppu.dart';
-import 'package:nes_emulator/ppu/ppu2.dart';
-
 import 'adapter.dart';
 import 'bus.dart';
+import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
+import 'controller/controller.dart';
 import 'cpu/cpu.dart';
+import 'dma/dma.dart';
+import 'ppu/abstruct_ppu.dart';
 import 'ppu/adapter.dart';
+import 'ppu/ppu.dart';
 import 'ram/ram.dart';
 
 /// 模拟NES主板

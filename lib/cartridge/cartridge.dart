@@ -1,8 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:nes_emulator/ram/ram.dart';
-
 import '../common.dart';
+import '../ram/ram.dart';
 import 'mapper/mapper.dart';
 import 'nes_file.dart';
 

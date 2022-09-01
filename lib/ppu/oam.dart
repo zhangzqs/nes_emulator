@@ -1,7 +1,6 @@
-import 'package:nes_emulator/ram/ram.dart';
-import 'package:nes_emulator/util.dart';
-
 import '../common.dart';
+import '../ram/ram.dart';
+import '../util.dart';
 
 class OamSprite {
   /// 精灵的X坐标

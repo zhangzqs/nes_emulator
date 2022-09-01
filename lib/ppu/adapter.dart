@@ -1,8 +1,7 @@
-import 'package:nes_emulator/cartridge/mapper/mapper.dart';
-import 'package:nes_emulator/ram/ram.dart';
-
 import '../bus_adapter.dart';
+import '../cartridge/mapper/mapper.dart';
 import '../common.dart';
+import '../ram/ram.dart';
 
 class PatternTablesAdapterForPpu implements BusAdapter {
   final Mapper mapper;

@@ -1,7 +1,6 @@
-import 'package:nes_emulator/dma/dma.dart';
-
 import '../bus_adapter.dart';
 import '../common.dart';
+import '../dma/dma.dart';
 import '../util.dart';
 
 part 'address_mode.dart';

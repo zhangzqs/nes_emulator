@@ -1,13 +1,12 @@
 import 'dart:core';
 import 'dart:typed_data';
 
-import 'package:nes_emulator/framebuffer.dart';
-import 'package:nes_emulator/ppu/palettes.dart';
-import 'package:nes_emulator/ram/ram.dart';
-
 import '../bus_adapter.dart';
 import '../common.dart';
+import '../framebuffer.dart';
+import '../ram/ram.dart';
 import 'abstruct_ppu.dart';
+import 'palettes.dart';
 
 class PpuImpl {
   final VoidCallback onNmiInterrupted;
