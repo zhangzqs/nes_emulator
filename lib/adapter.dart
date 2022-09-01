@@ -1,10 +1,10 @@
 import 'package:nes_emulator/controller/controller.dart';
+import 'package:nes_emulator/ppu/abstruct_ppu.dart';
 import 'package:nes_emulator/util.dart';
 
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
-import 'ppu/ppu.dart';
 import 'ram/ram.dart';
 
 class RamAdapter implements BusAdapter {

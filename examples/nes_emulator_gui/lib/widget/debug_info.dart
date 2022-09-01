@@ -13,12 +13,12 @@ class DebugInfoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Row(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -39,23 +39,21 @@ class DebugInfoWidget extends StatelessWidget {
                     ),
                 ],
               ),
-            ),
-            Expanded(
-              child: Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (palettesView != null)
                     Expanded(
                       child: AspectRatio(
-                        aspectRatio: 1,
+                        aspectRatio: 8,
                         child: palettesView,
                       ),
                     ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ));
   }
 }
