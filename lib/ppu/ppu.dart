@@ -38,7 +38,7 @@ class MyPpu implements IPpu {
 
   int _frame = 0;
   @override
-  int get frame => _frame;
+  int get totalFrames => _frame;
 
   /// PPU registers
   U8 _x = 0; // fine x scroll (3 bit)

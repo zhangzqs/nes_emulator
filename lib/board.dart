@@ -8,7 +8,7 @@ import 'cartridge/cartridge.dart';
 import 'common.dart';
 import 'cpu/cpu.dart';
 import 'ppu/adapter.dart';
-import 'ppu/ppu.dart';
+import 'ppu/ppu2.dart';
 import 'ram/ram.dart';
 
 /// 模拟NES主板
@@ -16,7 +16,7 @@ class Board {
   final cpuBus = Bus();
   final ppuBus = Bus();
 
-  late MyPpu ppu;
+  late Ppu2 ppu;
   late CPU cpu;
 
   /// nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
@@ -43,8 +43,8 @@ class Board {
     // cpu作为总线的master设备需要拿到总线对象
     cpu = CPU(bus: cpuBus);
 
-    ppu = MyPpu(
-      ppuBus: ppuBus,
+    ppu = Ppu2(
+      bus: ppuBus,
       onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
     );
 

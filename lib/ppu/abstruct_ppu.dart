@@ -36,5 +36,5 @@ abstract class IPpu {
   void clock();
 
   /// 获取当前总帧数
-  int get frame;
+  int get totalFrames;
 }
