@@ -72,10 +72,10 @@ class NameTablesAdapterForPpu implements BusAdapter {
   bool accept(U16 address) => address >= 0x2000 && address < 0x3F00;
 
   @override
-  U8 read(U16 address) => ram.read(_mirrorAddress(address) % 0x1000);
+  U8 read(U16 address) => ram.read(_mirrorAddress(address));
 
   @override
-  void write(U16 address, U8 value) => ram.write(_mirrorAddress(address) % 0x1000, value);
+  void write(U16 address, U8 value) => ram.write(_mirrorAddress(address), value);
 }
 
 /// 调色板适配器
@@ -83,14 +83,39 @@ class PalettesAdapterForPpu implements BusAdapter {
   final Ram ram;
   PalettesAdapterForPpu(this.ram);
 
+  /// 读取调色板
+  /// address取值为0<=address<=31
+  U8 _readPalette(U16 address) {
+    // 调色板有32字节组成，有8个子调色板
+    // 前4个调色板供背景使用，后四个调色板供精灵使用
+    // 每个子调色板有4种颜色，每个颜色由一字节索引组成
+    // 即4*8 = 32字节
+
+    // 如果是精灵的调色板且命中0号颜色
+    // 没搞懂
+    // https://github.com/fogleman/nes/blob/master/nes/ppu.go#L195
+    if (address >= 16 && address % 4 == 0) {
+      address -= 16;
+    }
+    return ram.read(address);
+  }
+
+  /// 写入调色板
+  void _writePalette(U16 address, U8 value) {
+    if (address >= 16 && address % 4 == 0) {
+      address -= 16;
+    }
+    return ram.write(address, value);
+  }
+
   @override
   bool accept(U16 address) => 0x3F00 <= address && address < 0x4000;
 
   @override
-  U8 read(U16 address) => ram.read((address - 0x3F00) % 0x20);
+  U8 read(U16 address) => _readPalette(address % 0x20);
 
   @override
-  void write(U16 address, U8 value) => ram.write((address - 0x3F00) % 0x20, value);
+  void write(U16 address, U8 value) => _writePalette(address % 0x20, value);
 }
 
 /// 最后的镜像适配器
