@@ -100,7 +100,8 @@ class Ppu implements IPpu {
   int fSelect = 0; // 0: read backdrop from EXT pins; 1: output color on EXT pins
   int fNmiOutput = 0; // 1bit, 0: 0ff, 1: on
 
-  void set regController(int value) {
+  @override
+  set regController(int value) {
     fBaseNameTable = value & 0x3;
     fAddressIncrement = value >> 2 & 0x1;
     fSpritePatternTable = value >> 3 & 0x1;
@@ -124,7 +125,8 @@ class Ppu implements IPpu {
   int fEmphasizeGreen = 0; // red on PAL/Dendy
   int fEmphasizeBlue = 0;
 
-  void set regMask(int value) {
+  @override
+  set regMask(int value) {
     fGeryScale = value & 0x1;
     fBackLeftMost = value >> 1 & 0x1;
     fSpriteLeftMost = value >> 2 & 0x1;
@@ -141,6 +143,7 @@ class Ppu implements IPpu {
   int fSpirteZeroHit = 0;
   int fVerticalBlanking = 0;
 
+  @override
   int get regStatus {
     int status = (fSign & 0x1f) | fSpriteOverflow << 5 | fSpirteZeroHit << 6;
 
@@ -154,6 +157,7 @@ class Ppu implements IPpu {
   }
 
   // OAM address ($2003) > write
+  @override
   int regOamAddress = 0x00;
 
   // The OAM (Object Attribute Memory) is internal memory inside the PPU that contains a display list of up to 64 sprites,
@@ -161,7 +165,9 @@ class Ppu implements IPpu {
   Uint8List oam = Uint8List(256);
 
   // OAM(SPR-RAM) data ($2004) <> read/write
+  @override
   int get regOamData => oam[regOamAddress];
+  @override
   set regOamData(int value) {
     oam[regOamAddress] = value;
   }
@@ -179,7 +185,8 @@ class Ppu implements IPpu {
   int regW = 0; // First or second write toggle, 1bit
 
   // Scroll ($2005) >> write x2
-  void set regScroll(int value) {
+  @override
+  set regScroll(int value) {
     if (regW == 0) {
       // first write
       // t: ....... ...ABCDE <- d: ABCDE...
@@ -200,7 +207,8 @@ class Ppu implements IPpu {
   }
 
   // Address ($2006) >> write x2
-  void set regAddress(int value) {
+  @override
+  set regAddress(int value) {
     if (regW == 0) {
       // first write
       // t: .CDEFGH ........ <- d: ..CDEFGH
@@ -229,6 +237,7 @@ class Ppu implements IPpu {
 
   // Data ($2007) <> read/write
   // this is the port that CPU read/write data via VRAM.
+  @override
   int get regData {
     int vramData = read(regV);
     int value;
@@ -246,7 +255,8 @@ class Ppu implements IPpu {
     return value;
   }
 
-  void set regData(int value) {
+  @override
+  set regData(int value) {
     write(regV, value);
     regV += fAddressIncrement == 1 ? 32 : 1;
   }
@@ -254,7 +264,7 @@ class Ppu implements IPpu {
   // https://wiki.nesdev.org/w/index.php?title=NMI
   int fNmiOccurred = 0; // 1bit
 
-  checkNmiPulled() {
+  void checkNmiPulled() {
     if (fNmiOccurred == 1 && fNmiOutput == 1) {
       onNmiInterrupted();
     }
@@ -273,7 +283,7 @@ class Ppu implements IPpu {
 
   FrameBuffer frame = FrameBuffer();
 
-  _renderPixel() {
+  void _renderPixel() {
     int x = cycle - 1, y = scanline;
 
     int backgroundPixel = _renderBGPixel();
@@ -310,7 +320,7 @@ class Ppu implements IPpu {
     return bus.write(0x3F00 + address, value);
   }
 
-  _renderBGPixel() {
+  int _renderBGPixel() {
     int currentTile = bgTile >> 32;
     int palette = currentTile >> ((7 - regX) * 4);
     int entry = _readPalette(palette & 0x0f);
@@ -318,32 +328,32 @@ class Ppu implements IPpu {
     return NES_SYS_PALETTES[entry]!;
   }
 
-  _fetchNameTableByte() {
+  void _fetchNameTableByte() {
     int addr = 0x2000 | (regV & 0x0fff);
     nameTableByte = read(addr);
   }
 
-  _fetchAttributeTableByte() {
+  void _fetchAttributeTableByte() {
     int addr = 0x23c0 | (regV & 0x0c00) | ((regV >> 4) & 0x38) | ((regV >> 2) & 0x07);
     int shift = ((regV >> 4) & 4) | (regV & 2);
     attributeTableByte = ((read(addr) >> shift) & 3) << 2;
   }
 
-  _fetchLowBGTileByte() {
+  void _fetchLowBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
     int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
 
     lowBGTileByte = read(addr);
   }
 
-  _fetchHighBGTileByte() {
+  void _fetchHighBGTileByte() {
     int fineY = (regV >> 12) & 0x7;
     int addr = 0x1000 * fBackPatternTable + nameTableByte * 16 + fineY;
 
     highBGTileByte = read(addr + 8);
   }
 
-  _composeBGTile() {
+  void _composeBGTile() {
     int tile = 0;
 
     for (int i = 7; i >= 0; i--) {
@@ -357,7 +367,7 @@ class Ppu implements IPpu {
     bgTile |= tile;
   }
 
-  _incrementCoarseX() {
+  void _incrementCoarseX() {
     if ((regV & 0x001f) == 31) {
       regV &= 0xffe0; // coarse X = 0
       regV ^= 0x0400; // switch horizontal nametable
@@ -366,7 +376,7 @@ class Ppu implements IPpu {
     }
   }
 
-  _incrementScrollY() {
+  void _incrementScrollY() {
     // if fine Y < 7
     if (regV & 0x7000 != 0x7000) {
       regV += 0x1000; // increment fine Y
@@ -387,12 +397,12 @@ class Ppu implements IPpu {
     }
   }
 
-  copyX() {
+  void copyX() {
     // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
     regV = (regV & 0xfbe0) | (regT & 0x041f);
   }
 
-  copyY() {
+  void copyY() {
     // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
     regV = (regV & 0x841f) | (regT & 0x7be0);
   }
@@ -400,7 +410,8 @@ class Ppu implements IPpu {
   _evaluateSprites() {}
 
   // every cycle behaivor is here: https://wiki.nesdev.com/w/index.php/PPU_rendering#Line-by-line_timing
-  clock() {
+  @override
+  void clock() {
     bool isScanlineVisible = scanline < 240;
     bool isScanlinePreRender = scanline == 261;
     bool isScanlineFetching = isScanlineVisible || isScanlinePreRender;
@@ -478,7 +489,7 @@ class Ppu implements IPpu {
     _updateCounters();
   }
 
-  _updateCounters() {
+  void _updateCounters() {
     if (fShowBack == 1 || fShowSprite == 1) {
       if (scanline == 261 && cycle == 339 && fOddFrames) {
         cycle = 0;
@@ -504,6 +515,7 @@ class Ppu implements IPpu {
     }
   }
 
+  @override
   void reset() {
     cycle = 0;
     scanline = 0;
@@ -513,49 +525,6 @@ class Ppu implements IPpu {
     regMask = 0x00;
     regScroll = 0x00;
     dataBuffer = 0x00;
-  }
-
-  int readRegister(int address) {
-    if (address == 0x2002) return regStatus;
-    if (address == 0x2004) return regOamData;
-    if (address == 0x2007) return regData;
-
-    throw "Unhandled ppu register reading: ${address.toHex()}";
-  }
-
-  void writeRegister(int address, int value) {
-    value &= 0xff;
-
-    if (address == 0x2000) {
-      regController = value;
-      return;
-    }
-    if (address == 0x2001) {
-      regMask = value;
-      return;
-    }
-    if (address == 0x2003) {
-      regOamAddress = value;
-      return;
-    }
-    if (address == 0x2004) {
-      regOamData = value;
-      return;
-    }
-    if (address == 0x2005) {
-      regScroll = value;
-      return;
-    }
-    if (address == 0x2006) {
-      regAddress = value;
-      return;
-    }
-    if (address == 0x2007) {
-      regData = value;
-      return;
-    }
-
-    throw "Unhandled register writing: ${address.toHex()}";
   }
 
   int read(int address) {
