@@ -111,13 +111,13 @@ class StandardControllerAdapter implements BusAdapter {
 
   @override
   U8 read(U16 address) {
-    final controller = address == 4016 ? controller1 : controller2;
+    final controller = address == 0x4016 ? controller1 : controller2;
     return controller?.regKeyState ?? 0;
   }
 
   @override
   void write(U16 address, U8 value) {
-    final controller = address == 4016 ? controller1 : controller2;
+    final controller = address == 0x4016 ? controller1 : controller2;
     controller?.regStrobe = value;
   }
 }
