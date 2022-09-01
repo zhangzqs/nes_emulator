@@ -1,11 +1,11 @@
 import 'package:nes_emulator/controller/controller.dart';
 import 'package:nes_emulator/ppu/abstruct_ppu.dart';
-import 'package:nes_emulator/util.dart';
 
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
 import 'ram/ram.dart';
+import 'util.dart';
 
 class RamAdapter implements BusAdapter {
   final Ram ram;
@@ -31,12 +31,12 @@ class PpuAdapter implements BusAdapter {
 
   @override
   U8 read(U16 address) {
-    switch (address) {
-      case 0x2002:
+    switch ((address - 0x2000) % 8) {
+      case 2:
         return ppu.regStatus;
-      case 0x2004:
+      case 4:
         return ppu.regOamData;
-      case 0x2007:
+      case 7:
         return ppu.regData;
       default:
         throw UnsupportedError('PPU IO address 0x${address.toHex()} cannot be read');
@@ -45,26 +45,26 @@ class PpuAdapter implements BusAdapter {
 
   @override
   void write(U16 address, U8 value) {
-    switch (address) {
-      case 0x2000:
+    switch ((address - 0x2000) % 8) {
+      case 0:
         ppu.regController = value;
         return;
-      case 0x2001:
+      case 1:
         ppu.regMask = value;
         return;
-      case 0x2003:
+      case 3:
         ppu.regOamAddress = value;
         return;
-      case 0x2004:
+      case 4:
         ppu.regOamData = value;
         return;
-      case 0x2005:
+      case 5:
         ppu.regScroll = value;
         return;
-      case 0x2006:
+      case 6:
         ppu.regAddress = value;
         return;
-      case 0x2007:
+      case 7:
         ppu.regData = value;
         return;
       default:
@@ -128,14 +128,11 @@ class UnusedAdapter implements BusAdapter {
 
   @override
   U8 read(U16 address) {
-    // TODO: implement read
-    throw UnimplementedError();
+    return 0;
   }
 
   @override
-  void write(U16 address, U8 value) {
-    // TODO: implement write
-  }
+  void write(U16 address, U8 value) {}
 }
 
 // Cartridge(ExpansionRom/SRam/Rom)
