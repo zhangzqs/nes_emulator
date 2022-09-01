@@ -54,7 +54,7 @@ class Cartridge extends ICartridge {
   @override
   final Uint8List prgRom;
   @override
-  final Uint8List chrRom;
+  Uint8List chrRom;
   @override
   final bool hasBatteryBacked;
   @override
@@ -70,7 +70,7 @@ class Cartridge extends ICartridge {
 
   Cartridge(NesFileReader reader)
       : prgRom = reader.prgRom,
-        chrRom = reader.chrRom,
+        chrRom = reader.chrBanks != 0 ? reader.chrRom : Uint8List(8192),
         hasBatteryBacked = reader.hasBatteryBacked,
         mirroring = reader.mirroring,
         mapperId = reader.mapperId,
