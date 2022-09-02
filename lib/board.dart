@@ -17,58 +17,47 @@ import 'ram/ram.dart';
 
 /// 模拟NES主板
 class Board {
-  final cpuBus = Bus();
-  final ppuBus = Bus();
+  // Field
+  final F64 sampleRate;
+  final void Function(FrameBuffer)? videoOutput; // 视频输出
+  final Function(F32)? audioOutput; // 音频输出
 
-  late IPpu ppu;
-  late CPU cpu;
-  late IApu apu;
+  // Simple Device
+  final Bus cpuBus = Bus(); // CPU总线
+  final Bus ppuBus = Bus(); // PPU总线
+  final Ram ram = Ram(0x800); // nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
+  final Ram nameTablesRam = Ram(0x1000); // 显存VRAM NameTable & Attribute
+  final Ram palettesRam = Ram(0x20); // Palette
 
-  /// nes的ram大小为0x800字节, 即 8*16^2B / (1024(B/KB)) = 2KB
-  final Ram ram = Ram(0x800);
-
-  /// NameTables
-  final Ram nameTablesRam = Ram(0x1000);
-
-  /// Palette
-  final Ram palettesRam = Ram(0x20);
-
-  /// 视频输出
-  void Function(FrameBuffer)? videoOutput;
-
-  /// 音频输出
-  void Function(F32)? audioOutput;
+  // Device with line
+  late CPU cpu = CPU(bus: cpuBus); // cpu作为总线的master设备需要拿到总线对象
+  late IPpu ppu = Ppu(
+    bus: ppuBus, // ppu是ppu总线的master设备，需要拿到总线控制权
+    onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi), // 连接PPU的NMI中断信号发生线到CPU
+  );
+  late IApu apu = Apu(
+    onIrqInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.irq), // 连接APU的IRQ中断信号发生线到CPU
+    onSample: (sample) {
+      if (audioOutput != null) audioOutput!(sample);
+    },
+    sampleRate: sampleRate,
+  );
 
   Board({
     required ICartridge cartridge,
     IStandardController? controller1,
     IStandardController? controller2,
-    required F64 sampleRate, // 音频信号采样率
+    this.sampleRate = 44100,
     this.videoOutput,
     this.audioOutput,
   }) {
+    // 将各个从设备链接到PPU总线适配器上并分配内存映射地址
     [
       PatternTablesAdapterForPpu(cartridge.mapper),
       NameTablesAdapterForPpu(nameTablesRam, cartridge.mirroring),
       PalettesAdapterForPpu(palettesRam),
       MirrorAdapterForPpu(ppuBus),
     ].forEach(ppuBus.registerDevice);
-
-    // cpu作为总线的master设备需要拿到总线对象
-    cpu = CPU(bus: cpuBus);
-
-    ppu = Ppu(
-      bus: ppuBus,
-      onNmiInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.nmi),
-    );
-
-    apu = Apu(
-      onIrqInterrupted: () => cpu.sendInterruptSignal(CpuInterruptSignal.irq),
-      onSample: (sample) {
-        if (audioOutput != null) audioOutput!(sample);
-      },
-      sampleRate: 44100,
-    );
 
     // 注册总线上的所有从设备，地址映射关系由各自适配器内部负责
     [
@@ -123,6 +112,7 @@ class Board {
     return false;
   }
 
+  /// 获取一帧数据
   void nextFrame([bool? outputVideo = true]) {
     while (!clock(outputVideo)) {}
   }
