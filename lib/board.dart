@@ -101,7 +101,7 @@ class Board {
   }
 
   /// 主板上的时钟发生器，需要外部调用提供时钟信号
-  bool clock() {
+  bool clock([bool? outputVideo = true]) {
     int frame = ppu.totalFrames;
 
     // 运行一次cpu
@@ -115,7 +115,7 @@ class Board {
 
     if (ppu.totalFrames > frame) {
       // 有新视频信号产生
-      if (videoOutput != null) {
+      if (videoOutput != null && outputVideo!) {
         videoOutput!(ppu.frameBuffer);
       }
       return true;
@@ -123,7 +123,7 @@ class Board {
     return false;
   }
 
-  void nextFrame() {
-    while (!clock()) {}
+  void nextFrame([bool? outputVideo = true]) {
+    while (!clock(outputVideo)) {}
   }
 }

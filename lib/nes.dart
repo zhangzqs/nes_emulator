@@ -25,5 +25,5 @@ class Nes {
 
   void reset() => board.reset();
 
-  void nextFrame() => board.nextFrame();
+  void nextFrame([bool? outputVideo = true]) => board.nextFrame(outputVideo);
 }

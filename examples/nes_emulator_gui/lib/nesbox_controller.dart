@@ -14,14 +14,16 @@ class NesBoxController {
 
   late Nes nes;
 
-  Timer? _frameLoopTimer;
+  Timer? _frameLoopTimer, _fpsTimer;
 
   final _frameStreamController = StreamController<FrameBuffer>.broadcast();
-
   Stream<FrameBuffer> get frameStream => _frameStreamController.stream;
 
   final _paletteStreamController = StreamController<FrameBuffer>.broadcast();
   Stream<FrameBuffer> get paletteStream => _paletteStreamController.stream;
+
+  final _fpsStreamController = StreamController<int>.broadcast();
+  Stream<int> get fpsStream => _fpsStreamController.stream;
 
   late ICartridge cartridge;
   late JoyPadController controller1, controller2;
@@ -29,6 +31,7 @@ class NesBoxController {
   late TileFrame tileFrame1, tileFrame2, palettes;
   late PalettesReader palettesReader;
 
+  int frames = 0;
   Future<void> loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
     final ByteData gameBytes = await rootBundle.load(gamePath);
     final nesFile = NesFileReader(gameBytes.buffer.asUint8List());
@@ -44,6 +47,7 @@ class NesBoxController {
       videoOutput: (FrameBuffer frameBuffer) {
         _frameStreamController.sink.add(frameBuffer);
         _paletteStreamController.sink.add(palettesReader.create());
+        frames++;
       },
       audioOutput: (double sample) {
         //
@@ -57,7 +61,13 @@ class NesBoxController {
   }
 
   void runFrameLoop() {
-    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) => nes.nextFrame());
+    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      nes.nextFrame();
+    });
+    _fpsTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _fpsStreamController.sink.add(frames);
+      frames = 0;
+    });
   }
 
   void pause() {

@@ -39,6 +39,15 @@ class GameScreen extends StatelessWidget {
                 return FrameCanvas(frame: snapshot.data!);
               },
             ),
+            fpsView: StreamBuilder(
+              stream: nesController.fpsStream,
+              builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox();
+                }
+                return Text('FPS: ${snapshot.data}');
+              },
+            ),
           ),
         ),
       ],

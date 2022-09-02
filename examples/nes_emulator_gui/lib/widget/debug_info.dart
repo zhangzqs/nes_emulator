@@ -6,8 +6,8 @@ import 'frame_canvas.dart';
 class DebugInfoWidget extends StatelessWidget {
   final TileFrame? frame1, frame2;
   final Widget? palettesView;
-
-  const DebugInfoWidget({Key? key, this.frame1, this.frame2, this.palettesView}) : super(key: key);
+  final Widget? fpsView;
+  const DebugInfoWidget({Key? key, this.frame1, this.frame2, this.palettesView, this.fpsView}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +52,7 @@ class DebugInfoWidget extends StatelessWidget {
                     ),
                 ],
               ),
+              if (fpsView != null) fpsView!,
             ],
           ),
         ));
