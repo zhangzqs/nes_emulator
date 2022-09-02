@@ -1,3 +1,4 @@
+import 'apu/abstruct_apu.dart';
 import 'bus_adapter.dart';
 import 'cartridge/cartridge.dart';
 import 'common.dart';
@@ -73,29 +74,92 @@ class PpuAdapter implements BusAdapter {
 }
 
 class ApuBusAdapter implements BusAdapter {
-  @override
-  bool accept(U16 address) => (0x4000 <= address && address < 0x4014);
+  IApu apu;
+  ApuBusAdapter(this.apu);
 
   @override
-  U8 read(U16 address) => 0;
-
-  @override
-  void write(U16 address, U8 value) {}
-}
-
-class SoundChannelAdapter implements BusAdapter {
-  @override
-  bool accept(U16 address) => address == 0x4015;
+  bool accept(U16 address) => (0x4000 <= address && address < 0x4014) || address == 0x4015;
 
   @override
   U8 read(U16 address) {
-    // TODO: implement read
-    throw UnimplementedError();
+    switch (address) {
+      case 0x4015:
+        return apu.readStatus();
+      default:
+        throw UnsupportedError("unhandled apu register read at address: ${address.toHex()}");
+    }
   }
 
   @override
   void write(U16 address, U8 value) {
-    // TODO: implement write
+    switch (address) {
+      case 0x4000:
+        apu.writeControlToPulse1(value);
+        break;
+      case 0x4001:
+        apu.writeSweepToPulse1(value);
+        break;
+      case 0x4002:
+        apu.writeTimerLowToPulse1(value);
+        break;
+      case 0x4003:
+        apu.writeTimerHighToPulse1(value);
+        break;
+      case 0x4004:
+        apu.writeControlToPulse2(value);
+        break;
+      case 0x4005:
+        apu.writeSweepToPulse2(value);
+        break;
+      case 0x4006:
+        apu.writeTimerLowToPulse2(value);
+        break;
+      case 0x4007:
+        apu.writeTimerHighToPulse2(value);
+        break;
+      case 0x4008:
+        apu.writeControlToTriangle(value);
+        break;
+      case 0x4009:
+        break;
+      case 0x4010:
+        apu.writeControlToDmc(value);
+        break;
+      case 0x4011:
+        apu.writeValueToDmc(value);
+        break;
+      case 0x4012:
+        apu.writeAddressToDmc(value);
+        break;
+      case 0x4013:
+        apu.writeLengthToDmc(value);
+        break;
+      case 0x400A:
+        apu.writeTimerLowToTriangle(value);
+        break;
+      case 0x400B:
+        apu.writeTimerHighToTriangle(value);
+        break;
+      case 0x400C:
+        apu.writeControlToNoise(value);
+        break;
+      case 0x400D:
+        break;
+      case 0x400E:
+        apu.writePeriodToNoise(value);
+        break;
+      case 0x400F:
+        apu.writeLengthToNoise(value);
+        break;
+      case 0x4015:
+        apu.writeControl(value);
+        break;
+      case 0x4017:
+        apu.writeFrameCounter(value);
+        break;
+      default:
+        throw UnsupportedError('unhandled apu register write at address: ${address.toHex()}');
+    }
   }
 }
 

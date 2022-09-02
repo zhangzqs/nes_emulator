@@ -75,7 +75,8 @@ void main() {
   test("cpu test", () async {
     final testlogs = File("testfiles/nestest.txt").readAsLinesSync();
 
-    final Board board = Board(cartridge: Cartridge(NesFileReader(File("testfiles/nestest.nes").readAsBytesSync())));
+    final Board board =
+        Board(cartridge: Cartridge(NesFileReader(File("testfiles/nestest.nes").readAsBytesSync())), sampleRate: 44100);
 
     board.reset();
     final cpu = board.cpu;
@@ -104,7 +105,7 @@ void main() {
       expect(cpu.regSP, log.regSP);
       expect(cpu.totalCycles, log.cpuCycles, reason: "cpu cycles not expected at line: ${index + 1}");
       do {
-        cpu.runOneClock();
+        cpu.clock();
       } while (cpu.isRunningInstruction());
     }
   });

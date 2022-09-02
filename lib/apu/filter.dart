@@ -53,7 +53,8 @@ Filter highPassFilter(F32 sampleRate, F32 cutoffFreq) {
 }
 
 class FilterChain implements Filter {
-  final List<Filter> chain = [];
+  final List<Filter> chain;
+  FilterChain([this.chain = const []]);
   @override
   F32 step(F32 x) {
     for (Filter filter in chain) {

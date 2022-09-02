@@ -68,7 +68,7 @@ class CPU {
   bool isRunningInstruction() => _remainingCycles != 0;
 
   /// cpu允许一个周期
-  void runOneClock() {
+  void clock() {
     // 上一条指令还没执行完毕
     if (_remainingCycles > 0) {
       _remainingCycles--;

@@ -1,3 +1,5 @@
+import 'package:nes_emulator/apu/abstruct_apu.dart';
+
 import '../common.dart';
 import '../constants.dart';
 import 'filter.dart';
@@ -39,10 +41,20 @@ class ApuImpl {
   VoidCallback onIrqInterrupted;
 
   void Function(F32) onSample;
-  ApuImpl({required this.onIrqInterrupted, required this.onSample}) {
+  ApuImpl({
+    required this.onIrqInterrupted,
+    required this.onSample,
+    required F64 sampleRate,
+  }) {
     apu.noise.shiftRegister = 1;
     apu.pulse1.channel = 1;
     apu.pulse2.channel = 2;
+    this.sampleRate = Constant.cpuFrequency / sampleRate;
+    filterChain = FilterChain([
+      highPassFilter(sampleRate, 90),
+      highPassFilter(sampleRate, 440),
+      lowPassFilter(sampleRate, 14000),
+    ]);
   }
 
   void step() {
@@ -223,4 +235,70 @@ class ApuImpl {
       apu.stepLength();
     }
   }
+}
+
+class Apu implements IApu {
+  final ApuImpl apu;
+  Apu({
+    required VoidCallback onIrqInterrupted,
+    required void Function(F32) onSample,
+    required F64 sampleRate,
+  }) : apu = ApuImpl(onIrqInterrupted: onIrqInterrupted, onSample: onSample, sampleRate: sampleRate);
+
+  // Pulse1 register
+  @override
+  void writeControlToPulse1(U8 value) => apu.pulse1.writeControl(value);
+  @override
+  void writeSweepToPulse1(U8 value) => apu.pulse1.writeControl(value);
+  @override
+  void writeTimerLowToPulse1(U8 value) => apu.pulse1.writeTimerLow(value);
+  @override
+  void writeTimerHighToPulse1(U8 value) => apu.pulse1.writeTimerHigh(value);
+
+  // Pulse2 register
+  @override
+  void writeControlToPulse2(U8 value) => apu.pulse2.writeControl(value);
+  @override
+  void writeSweepToPulse2(U8 value) => apu.pulse2.writeSweep(value);
+  @override
+  void writeTimerLowToPulse2(U8 value) => apu.pulse2.writeTimerLow(value);
+  @override
+  void writeTimerHighToPulse2(U8 value) => apu.pulse2.writeTimerHigh(value);
+
+  // DMC register
+  @override
+  void writeControlToDmc(U8 value) => apu.dmc.writeControl(value);
+  @override
+  void writeValueToDmc(U8 value) => apu.dmc.writeValue(value);
+  @override
+  void writeAddressToDmc(U8 value) => apu.dmc.writeAddress(value);
+  @override
+  void writeLengthToDmc(U8 value) => apu.dmc.writeLength(value);
+
+  // Triangle register
+  @override
+  void writeControlToTriangle(U8 value) => apu.triangle.writeControl(value);
+  @override
+  void writeTimerLowToTriangle(U8 value) => apu.triangle.writeTimerLow(value);
+  @override
+  void writeTimerHighToTriangle(U8 value) => apu.triangle.writeTimerHigh(value);
+
+  // Noise register
+  @override
+  void writeControlToNoise(U8 value) => apu.noise.writeControl(value);
+  @override
+  void writePeriodToNoise(U8 value) => apu.noise.writePeriod(value);
+  @override
+  void writeLengthToNoise(U8 value) => apu.noise.writeLength(value);
+
+  // Other register
+  @override
+  void writeControl(U8 value) => apu.writeControl(value);
+  @override
+  void writeFrameCounter(U8 value) => apu.writeFrameCounter(value);
+  @override
+  U8 readStatus() => apu.readStatus();
+
+  @override
+  void clock() => apu.step();
 }

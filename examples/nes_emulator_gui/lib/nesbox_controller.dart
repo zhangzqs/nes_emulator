@@ -16,10 +16,6 @@ class NesBoxController {
 
   Timer? _frameLoopTimer;
 
-  Completer _gameLoadedCompleter = Completer();
-
-  late Future gameLoaded = _gameLoadedCompleter.future;
-
   final _frameStreamController = StreamController<FrameBuffer>.broadcast();
 
   Stream<FrameBuffer> get frameStream => _frameStreamController.stream;
@@ -44,20 +40,24 @@ class NesBoxController {
       cartridge: cartridge,
       controller1: controller1,
       controller2: controller2,
+      sampleRate: 44100,
+      videoOutput: (FrameBuffer frameBuffer) {
+        _frameStreamController.sink.add(frameBuffer);
+        _paletteStreamController.sink.add(palettesReader.create());
+      },
+      audioOutput: (double sample) {
+        //
+      },
     );
     final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge.mapper));
     palettesReader = PalettesReader(nes.board.ppuBus);
     tileFrame1 = tileFrameReader.firstTileFrame;
     tileFrame2 = tileFrameReader.secondTileFrame;
-    if (!_gameLoadedCompleter.isCompleted) _gameLoadedCompleter.complete('loaded');
     runFrameLoop();
   }
 
   void runFrameLoop() {
-    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) async {
-      _frameStreamController.sink.add(nes.stepFrame());
-      _paletteStreamController.sink.add(palettesReader.create());
-    });
+    _frameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) => nes.nextFrame());
   }
 
   void pause() {
