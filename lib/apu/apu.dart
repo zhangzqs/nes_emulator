@@ -247,49 +247,98 @@ class Apu implements IApu {
 
   // Pulse1 register
   @override
-  void writeControlToPulse1(U8 value) => apu.pulse1.writeControl(value);
+  void writeControlToPulse1(U8 value) {
+    apu.pulse1.writeControl(value);
+  }
+
   @override
-  void writeSweepToPulse1(U8 value) => apu.pulse1.writeControl(value);
+  void writeSweepToPulse1(U8 value) {
+    apu.pulse1.writeSweep(value);
+  }
+
   @override
-  void writeTimerLowToPulse1(U8 value) => apu.pulse1.writeTimerLow(value);
+  void writeTimerLowToPulse1(U8 value) {
+    apu.pulse1.writeTimerLow(value);
+  }
+
   @override
-  void writeTimerHighToPulse1(U8 value) => apu.pulse1.writeTimerHigh(value);
+  void writeTimerHighToPulse1(U8 value) {
+    apu.pulse1.writeTimerHigh(value);
+  }
 
   // Pulse2 register
   @override
-  void writeControlToPulse2(U8 value) => apu.pulse2.writeControl(value);
-  @override
-  void writeSweepToPulse2(U8 value) => apu.pulse2.writeSweep(value);
-  @override
-  void writeTimerLowToPulse2(U8 value) => apu.pulse2.writeTimerLow(value);
-  @override
-  void writeTimerHighToPulse2(U8 value) => apu.pulse2.writeTimerHigh(value);
+  void writeControlToPulse2(U8 value) {
+    apu.pulse2.writeControl(value);
+  }
 
-  // DMC register
   @override
-  void writeControlToDmc(U8 value) => apu.dmc.writeControl(value);
-  @override
-  void writeValueToDmc(U8 value) => apu.dmc.writeValue(value);
-  @override
-  void writeAddressToDmc(U8 value) => apu.dmc.writeAddress(value);
-  @override
-  void writeLengthToDmc(U8 value) => apu.dmc.writeLength(value);
+  void writeSweepToPulse2(U8 value) {
+    apu.pulse2.writeSweep(value);
+  }
 
-  // Triangle register
   @override
-  void writeControlToTriangle(U8 value) => apu.triangle.writeControl(value);
+  void writeTimerLowToPulse2(U8 value) {
+    apu.pulse2.writeTimerLow(value);
+  }
+
   @override
-  void writeTimerLowToTriangle(U8 value) => apu.triangle.writeTimerLow(value);
+  void writeTimerHighToPulse2(U8 value) {
+    apu.pulse2.writeTimerHigh(value);
+  }
+
+  // DMC register(未知)
   @override
-  void writeTimerHighToTriangle(U8 value) => apu.triangle.writeTimerHigh(value);
+  void writeControlToDmc(U8 value) {
+    apu.dmc.writeControl(value);
+  }
+
+  @override
+  void writeValueToDmc(U8 value) {
+    apu.dmc.writeValue(value);
+  }
+
+  @override
+  void writeAddressToDmc(U8 value) {
+    apu.dmc.writeAddress(value);
+  }
+
+  @override
+  void writeLengthToDmc(U8 value) {
+    apu.dmc.writeLength(value);
+  }
+
+  // Triangle register(无声音)
+  @override
+  void writeControlToTriangle(U8 value) {
+    apu.triangle.writeControl(value);
+  }
+
+  @override
+  void writeTimerLowToTriangle(U8 value) {
+    apu.triangle.writeTimerLow(value);
+  }
+
+  @override
+  void writeTimerHighToTriangle(U8 value) {
+    apu.triangle.writeTimerHigh(value);
+  }
 
   // Noise register
   @override
-  void writeControlToNoise(U8 value) => apu.noise.writeControl(value);
+  void writeControlToNoise(U8 value) {
+    apu.noise.writeControl(value);
+  }
+
   @override
-  void writePeriodToNoise(U8 value) => apu.noise.writePeriod(value);
+  void writePeriodToNoise(U8 value) {
+    apu.noise.writePeriod(value);
+  }
+
   @override
-  void writeLengthToNoise(U8 value) => apu.noise.writeLength(value);
+  void writeLengthToNoise(U8 value) {
+    apu.noise.writeLength(value);
+  }
 
   // Other register
   @override

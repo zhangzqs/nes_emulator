@@ -29,7 +29,7 @@ class Triangle {
 
   void writeTimerHigh(value) {
     t.lengthValue = lengthTable[value >> 3];
-    t.timerPeriod = (t.timerPeriod & 0x00FF) | (value & 7 << 8);
+    t.timerPeriod = (t.timerPeriod & 0x00FF) | ((value & 7) << 8);
     t.timerValue = t.timerPeriod;
     t.counterReload = true;
   }

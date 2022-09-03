@@ -50,13 +50,13 @@ class Pulse {
     p.sweepReload = true;
   }
 
-  writeTimerLow(value) {
-    p.timerPeriod = (p.timerPeriod & 0xFF00) | value;
+  writeTimerLow(U8 value) {
+    p.timerPeriod = (p.timerPeriod & 0xFF00) | (value);
   }
 
-  writeTimerHigh(value) {
+  writeTimerHigh(U8 value) {
     p.lengthValue = lengthTable[value >> 3];
-    p.timerPeriod = (p.timerPeriod & 0x00FF) | (value & 7 << 8);
+    p.timerPeriod = (p.timerPeriod & 0x00FF) | ((value & 7) << 8);
     p.envelopeStart = true;
     p.dutyValue = 0;
   }
