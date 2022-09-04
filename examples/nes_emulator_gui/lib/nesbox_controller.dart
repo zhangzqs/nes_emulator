@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:nes_emulator/cartridge/cartridge.dart';
 import 'package:nes_emulator/cartridge/nes_file.dart';
 import 'package:nes_emulator/controller/controller.dart';
@@ -31,7 +33,15 @@ class NesBoxController {
   late TileFrame tileFrame1, tileFrame2, palettes;
   late PalettesReader palettesReader;
 
+  // final _soundPlayer = FlutterSoundPlayer();
+  var sampleCount = 0;
+
+  final sample = <double>[];
+  int samplePtr = 0;
   int frames = 0;
+
+  bool isStop = false;
+
   Future<void> loadGame([String gamePath = 'roms/Super_mario_brothers.nes']) async {
     final ByteData gameBytes = await rootBundle.load(gamePath);
     final nesFile = NesFileReader(gameBytes.buffer.asUint8List());
@@ -49,15 +59,24 @@ class NesBoxController {
         _paletteStreamController.sink.add(palettesReader.create());
         frames++;
       },
-      audioOutput: (double sample) {
-        //
+      audioOutput: (double sd) {
+        // sample.add(sd);
       },
     );
     final tileFrameReader = PatternTablesReader(PatternTablesAdapterForPpu(cartridge.mapper));
     palettesReader = PalettesReader(nes.board.ppuBus);
     tileFrame1 = tileFrameReader.firstTileFrame;
     tileFrame2 = tileFrameReader.secondTileFrame;
+    // await play();
     runFrameLoop();
+  }
+
+  Future<void> play() async {
+    // await _soundPlayer.openPlayer();
+    // await _soundPlayer.startPlayerFromStream(
+    //   codec: Codec.pcm16,
+    //   sampleRate: 44100,
+    // );
   }
 
   void runFrameLoop() {
@@ -68,10 +87,17 @@ class NesBoxController {
       _fpsStreamController.sink.add(frames);
       frames = 0;
     });
+    // Timer.periodic(const Duration(seconds: 3), (timer) {
+    //   final int16List = sample.map((e) => (e * 32767).floor()).toList();
+    //   final buffer = Int16List.fromList(int16List);
+    //   _soundPlayer.feedFromStream(Uint8List.view(buffer.buffer));
+    //   sample.clear();
+    // });
   }
 
   void pause() {
     _frameLoopTimer?.cancel();
+    _fpsTimer?.cancel();
   }
 
   void resume() {

@@ -52,7 +52,7 @@ class Noise {
       final b1 = n.shiftRegister & 1;
       final b2 = (n.shiftRegister >> shift) & 1;
       n.shiftRegister >>= 1;
-      n.shiftRegister |= (b1 ^ b2) << 14;
+      n.shiftRegister |= ((b1 ^ b2) << 14);
     } else {
       n.timerValue--;
     }

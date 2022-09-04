@@ -1,4 +1,5 @@
 import 'package:nes_emulator/apu/abstruct_apu.dart';
+import 'package:nes_emulator/util.dart';
 
 import '../common.dart';
 import '../constants.dart';
@@ -199,11 +200,11 @@ class ApuImpl {
   }
 
   void writeControl(U8 value) {
-    apu.pulse1.enabled = value & 1 == 1;
-    apu.pulse2.enabled = value & 2 == 2;
-    apu.triangle.enabled = value & 4 == 4;
-    apu.noise.enabled = value & 8 == 8;
-    apu.dmc.enabled = value & 16 == 16;
+    apu.pulse1.enabled = value.getBit(0);
+    apu.pulse2.enabled = value.getBit(1);
+    apu.triangle.enabled = value.getBit(2);
+    apu.noise.enabled = value.getBit(3);
+    apu.dmc.enabled = value.getBit(4);
     if (!apu.pulse1.enabled) {
       apu.pulse1.lengthValue = 0;
     }
