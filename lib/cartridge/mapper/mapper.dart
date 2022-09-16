@@ -16,6 +16,7 @@ abstract class Mapper {
 
 class MapperFactory {
   static Mapper getMapper(ICartridge cartridge) {
+    print('寻找Mapper: ${cartridge.mapperId}');
     switch (cartridge.mapperId) {
       case 0:
         return Mapper2(cartridge);

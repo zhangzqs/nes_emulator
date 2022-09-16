@@ -1,19 +1,4 @@
-import 'package:nes_emulator/apu/apu.dart';
-
-import 'adapter.dart';
-import 'apu/abstruct_apu.dart';
-import 'bus.dart';
-import 'bus_adapter.dart';
-import 'cartridge/cartridge.dart';
-import 'common.dart';
-import 'controller/controller.dart';
-import 'cpu/cpu.dart';
-import 'dma/dma.dart';
-import 'framebuffer.dart';
-import 'ppu/abstruct_ppu.dart';
-import 'ppu/adapter.dart';
-import 'ppu/ppu.dart';
-import 'ram/ram.dart';
+import 'components.dart';
 
 /// 模拟NES主板
 class Board {
@@ -52,15 +37,16 @@ class Board {
     this.audioOutput,
   }) {
     // 将各个从设备链接到PPU总线适配器上并分配内存映射地址
-    [
+
+    ppuBus.registerDevices([
       PatternTablesAdapterForPpu(cartridge.mapper),
       NameTablesAdapterForPpu(nameTablesRam, cartridge.mirroring),
       PalettesAdapterForPpu(palettesRam),
       MirrorAdapterForPpu(ppuBus),
-    ].forEach(ppuBus.registerDevice);
+    ]);
 
     // 注册总线上的所有从设备，地址映射关系由各自适配器内部负责
-    [
+    cpuBus.registerDevices([
       RamAdapter(ram),
       PpuAdapter(ppu),
       ApuBusAdapter(apu),
@@ -77,7 +63,7 @@ class Board {
       ),
       UnusedAdapter(),
       CartridgeAdapterForCpu(cartridge),
-    ].forEach(cpuBus.registerDevice);
+    ]);
 
     reset();
   }

@@ -47,7 +47,6 @@ class Mapper0 extends Mapper {
       cartridge.prgRom[address - 0x8000] = value;
       return;
     }
-    throw UnsupportedError('Mapper0 cannot read by cpu on address 0x${address.toHex()}');
   }
 
   @override
@@ -55,7 +54,7 @@ class Mapper0 extends Mapper {
     if (address >= 0x0000 && address < 0x2000) {
       return cartridge.chrRom[address];
     }
-    throw UnsupportedError('Mapper0 cannot read by ppu on address 0x${address.toHex()}');
+    return 0;
   }
 
   @override
@@ -66,6 +65,5 @@ class Mapper0 extends Mapper {
         cartridge.chrRom[address] = value;
       }
     }
-    throw UnsupportedError('Mapper0 cannot write by ppu on address 0x${address.toHex()}');
   }
 }

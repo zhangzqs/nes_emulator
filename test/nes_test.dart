@@ -5,7 +5,7 @@ import 'package:nes_emulator/cartridge/cartridge.dart';
 import 'package:nes_emulator/cartridge/nes_file.dart';
 import 'package:nes_emulator/cpu/cpu.dart';
 import 'package:nes_emulator/util.dart';
-import "package:test/test.dart";
+import 'package:test/test.dart';
 
 class NesLog {
   NesLog({
